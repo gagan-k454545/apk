@@ -181,7 +181,6 @@ class _HistoryCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
-        onTap: _showDetail,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -264,9 +263,5 @@ class _HistoryCard extends StatelessWidget {
         ),
       ),
     ).animate().fadeIn().slideY(begin: 0.05);
-  }
-
-  void _showDetail() {
-    // Already showing inline, could expand to full screen
   }
 }

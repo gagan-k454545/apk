@@ -142,6 +142,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: SliverReorderableList(
                 itemCount: filteredMembers.length,
+                // ignore: deprecated_member_use
                 onReorder: (oldIndex, newIndex) {
                   if (_searchQuery.isNotEmpty) return;
                   ref.read(groupsProvider.notifier).reorderMembers(
@@ -346,7 +347,7 @@ class _NameCard extends StatelessWidget {
     final avatarColor = colors[index % colors.length];
 
     return Dismissible(
-      key: key!,
+      key: ValueKey('name_$name'),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
         return await showDialog<bool>(

@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../models/models.dart';
-import '../../core/constants/app_constants.dart';
+import '../models/models.dart';
+import '../core/constants/app_constants.dart';
 
 class AppRepository {
   AppRepository._();
@@ -72,20 +72,6 @@ class AppRepository {
     await _settingsBox.put('settings', settings.toMap());
   }
 
-  // ── Stats ──
-
-  int get totalGroups => _groupsBox.length;
-
-  int get totalNames {
-    int count = 0;
-    for (final group in getGroups()) {
-      count += group.memberCount;
-    }
-    return count;
-  }
-
-  int get totalShuffles => getHistory().length;
-
   // ── Export / Import ──
 
   Map<String, dynamic> exportData() {
@@ -98,27 +84,36 @@ class AppRepository {
   }
 
   Future<void> importData(Map<String, dynamic> data) async {
-    await _groupsBox.clear();
-    await _historyBox.clear();
-    await _settingsBox.clear();
+    // Backup current data first
+    final backup = exportData();
 
-    if (data['groups'] != null) {
-      for (final g in data['groups'] as List) {
-        final group = Group.fromMap(Map<String, dynamic>.from(g as Map));
-        await _groupsBox.put(group.id, group.toMap());
+    try {
+      await _groupsBox.clear();
+      await _historyBox.clear();
+      await _settingsBox.clear();
+
+      if (data['groups'] != null) {
+        for (final g in data['groups'] as List) {
+          final group = Group.fromMap(Map<String, dynamic>.from(g as Map));
+          await _groupsBox.put(group.id, group.toMap());
+        }
       }
-    }
-    if (data['history'] != null) {
-      for (final h in data['history'] as List) {
-        final entry =
-            HistoryEntry.fromMap(Map<String, dynamic>.from(h as Map));
-        await _historyBox.put(entry.id, entry.toMap());
+      if (data['history'] != null) {
+        for (final h in data['history'] as List) {
+          final entry =
+              HistoryEntry.fromMap(Map<String, dynamic>.from(h as Map));
+          await _historyBox.put(entry.id, entry.toMap());
+        }
       }
-    }
-    if (data['settings'] != null) {
-      final settings =
-          AppSettings.fromMap(Map<String, dynamic>.from(data['settings'] as Map));
-      await saveSettings(settings);
+      if (data['settings'] != null) {
+        final settings =
+            AppSettings.fromMap(Map<String, dynamic>.from(data['settings'] as Map));
+        await saveSettings(settings);
+      }
+    } catch (e) {
+      // Restore from backup on failure
+      await importData(backup);
+      rethrow;
     }
   }
 

@@ -192,6 +192,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  // ignore: unreachable_switch_default
   String _themeModeLabel(ThemeModeOption mode) {
     switch (mode) {
       case ThemeModeOption.system:

@@ -71,6 +71,7 @@ class _ShuffleScreenState extends ConsumerState<ShuffleScreen>
     });
 
     _shuffleController.forward(from: 0).then((_) {
+      if (!mounted) return;
       final result = ref.read(shuffleServiceProvider).shuffle(group);
       ref.read(settingsProvider.notifier).incrementShuffles();
       ref.read(historyProvider.notifier).addEntry(
@@ -127,7 +128,7 @@ class _ShuffleScreenState extends ConsumerState<ShuffleScreen>
                   const Spacer(),
                   if (!_showResult) _buildShuffleAnimation(theme, group),
                   if (_showResult) ..._buildResultList(theme),
-                  const Spacer(flex: 1),
+                  const Spacer(),
                   _buildBottomActions(theme, group),
                   const SizedBox(height: 16),
                 ],
@@ -153,6 +154,7 @@ class _ShuffleScreenState extends ConsumerState<ShuffleScreen>
               alignment: Alignment.center,
               transform: Matrix4.identity()
                 ..rotateZ(rotation)
+                // ignore: deprecated_member_use
                 ..scale(scale, scale, 1.0),
               child: Container(
                 width: 120,

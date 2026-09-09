@@ -5,10 +5,9 @@ extension BuildContextExtensions on BuildContext {
   TextTheme get textTheme => theme.textTheme;
   ColorScheme get colorScheme => theme.colorScheme;
 
-  MediaQueryData get mediaQuery => MediaQuery.of(this);
-  double get screenWidth => mediaQuery.size.width;
-  double get screenHeight => mediaQuery.size.height;
-  EdgeInsets get padding => mediaQuery.padding;
+  double get screenWidth => MediaQuery.sizeOf(this).width;
+  double get screenHeight => MediaQuery.sizeOf(this).height;
+  EdgeInsets get padding => MediaQuery.paddingOf(this);
 
   bool get isMobile => screenWidth < 600;
   bool get isTablet => screenWidth >= 600 && screenWidth < 900;
@@ -88,5 +87,8 @@ extension ListExtensions<T> on List<T> {
     return list;
   }
 
-  T get random => this[DateTime.now().microsecondsSinceEpoch % length];
+  T get random {
+    if (isEmpty) throw StateError('Cannot get random element from empty list');
+    return this[DateTime.now().microsecondsSinceEpoch % length];
+  }
 }
