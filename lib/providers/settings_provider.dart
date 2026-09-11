@@ -19,6 +19,21 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     _repository.saveSettings(state);
   }
 
+  void incrementCoinTosses() {
+    state = state.copyWith(totalCoinTosses: state.totalCoinTosses + 1);
+    _repository.saveSettings(state);
+  }
+
+  void setSoundEnabled(bool enabled) {
+    state = state.copyWith(soundEnabled: enabled);
+    _repository.saveSettings(state);
+  }
+
+  void setHapticEnabled(bool enabled) {
+    state = state.copyWith(hapticEnabled: enabled);
+    _repository.saveSettings(state);
+  }
+
   void clearAll() {
     state = AppSettings.defaults();
     _repository.saveSettings(state);

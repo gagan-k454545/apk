@@ -34,15 +34,15 @@ class HistoryEntry {
 
   factory HistoryEntry.fromMap(Map<String, dynamic> map) {
     return HistoryEntry(
-      id: map['id'] as String?,
-      groupId: map['groupId'] as String,
-      groupName: map['groupName'] as String,
+      id: map['id']?.toString(),
+      groupId: map['groupId']?.toString() ?? '',
+      groupName: map['groupName']?.toString() ?? '',
       result: (map['result'] as List<dynamic>?)
-              ?.map((r) => r as String)
+              ?.map((r) => r.toString())
               .toList() ??
           [],
       shuffledAt: map['shuffledAt'] != null
-          ? DateTime.parse(map['shuffledAt'] as String)
+          ? DateTime.tryParse(map['shuffledAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
     );
   }

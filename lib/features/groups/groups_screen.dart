@@ -15,8 +15,8 @@ class GroupsScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
-            title: const Text('Groups'),
+          const SliverAppBar.large(
+            title: Text('Groups'),
           ),
           if (groups.isEmpty)
             SliverFillRemaining(

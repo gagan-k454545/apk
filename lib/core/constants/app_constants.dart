@@ -5,6 +5,7 @@ abstract final class AppConstants {
   static const String hiveBoxName = 'shuffle_master_box';
   static const String groupsBox = 'groups';
   static const String historyBox = 'history';
+  static const String coinTossBox = 'coin_toss_history';
   static const String settingsBox = 'settings';
 
   static const int maxGroupSize = 1000;

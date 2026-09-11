@@ -197,6 +197,44 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: group.memberCount >= 2
+          ? Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: FilledButton.icon(
+                    onPressed: () => context.push('/shuffle/${group.id}'),
+                    icon: const Icon(Icons.shuffle, size: 24),
+                    label: const Text(
+                      'SHUFFLE NOW',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          : null,
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

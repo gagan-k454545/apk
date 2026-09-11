@@ -16,12 +16,13 @@ class SettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final groups = ref.watch(groupsProvider);
     final history = ref.watch(historyProvider);
+    final coinTosses = ref.watch(coinTossProvider);
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar.large(
-            title: const Text('Settings'),
+          const SliverAppBar.large(
+            title: Text('Settings'),
           ),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -42,7 +43,35 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     _buildThemeTile(context, ref, settings),
                     const Divider(height: 1),
-                    _buildAboutTile(context),
+                    SwitchListTile(
+                      secondary: Icon(
+                        Icons.volume_up_outlined,
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: const Text('Sound Effects'),
+                      subtitle: const Text('Subtle sound on shuffle & flip'),
+                      value: settings.soundEnabled,
+                      onChanged: (val) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setSoundEnabled(val);
+                      },
+                    ),
+                    const Divider(height: 1),
+                    SwitchListTile(
+                      secondary: Icon(
+                        Icons.vibration_outlined,
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: const Text('Haptic Feedback'),
+                      subtitle: const Text('Vibrate during interactions'),
+                      value: settings.hapticEnabled,
+                      onChanged: (val) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setHapticEnabled(val);
+                      },
+                    ),
                   ],
                 ),
               ).animate().fadeIn(delay: 200.ms),
@@ -52,7 +81,7 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             sliver: SliverToBoxAdapter(
               child: Text(
-                'Data',
+                'Data & Backup',
                 style: theme.textTheme.titleSmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
@@ -73,7 +102,7 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       title: const Text('Export Data'),
                       subtitle: Text(
-                        '${groups.length} groups, ${history.length} history entries',
+                        '${groups.length} groups, ${history.length} shuffles, ${coinTosses.length} coin tosses',
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => _exportData(context, ref),
@@ -131,7 +160,7 @@ class SettingsScreen extends ConsumerWidget {
                         color: theme.colorScheme.primary,
                       ),
                       title: const Text('Shuffle Master'),
-                      subtitle: const Text('Version 1.0.0'),
+                      subtitle: const Text('Version 2.0.0 Premium Edition'),
                     ),
                     const Divider(height: 1),
                     ListTile(
@@ -168,31 +197,6 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAboutTile(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      leading: Icon(
-        Icons.info_outline,
-        color: theme.colorScheme.primary,
-      ),
-      title: const Text('About'),
-      subtitle: const Text('Shuffle Master v1.0.0'),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => showAboutDialog(
-        context: context,
-        applicationName: 'Shuffle Master',
-        applicationVersion: '1.0.0',
-        applicationLegalese: '© 2026 Shuffle Master',
-        children: [
-          const Text(
-            'A premium randomizer app that helps you shuffle names and lists instantly with a beautiful interface.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ignore: unreachable_switch_default
   String _themeModeLabel(ThemeModeOption mode) {
     switch (mode) {
       case ThemeModeOption.system:
@@ -302,6 +306,7 @@ class SettingsScreen extends ConsumerWidget {
                 await AppRepository.instance.importData(data);
                 ref.invalidate(groupsProvider);
                 ref.invalidate(historyProvider);
+                ref.invalidate(coinTossProvider);
                 ref.invalidate(settingsProvider);
                 if (context.mounted) {
                   Navigator.of(context).pop();
@@ -338,7 +343,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         title: const Text('Clear All Data?'),
         content: const Text(
-          'This will permanently delete all groups, names, history, and settings. This action cannot be undone.',
+          'This will permanently delete all groups, names, shuffle history, coin toss history, and settings. This action cannot be undone.',
         ),
         actions: [
           TextButton(
@@ -350,6 +355,7 @@ class SettingsScreen extends ConsumerWidget {
               await AppRepository.instance.clearAll();
               ref.invalidate(groupsProvider);
               ref.invalidate(historyProvider);
+              ref.invalidate(coinTossProvider);
               ref.invalidate(settingsProvider);
               if (context.mounted) {
                 Navigator.of(context).pop();

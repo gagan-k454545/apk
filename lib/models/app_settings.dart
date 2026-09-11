@@ -4,18 +4,30 @@ class AppSettings {
   AppSettings({
     this.themeMode = ThemeModeOption.system,
     this.totalShuffles = 0,
+    this.totalCoinTosses = 0,
+    this.soundEnabled = true,
+    this.hapticEnabled = true,
   });
 
   final ThemeModeOption themeMode;
   final int totalShuffles;
+  final int totalCoinTosses;
+  final bool soundEnabled;
+  final bool hapticEnabled;
 
   AppSettings copyWith({
     ThemeModeOption? themeMode,
     int? totalShuffles,
+    int? totalCoinTosses,
+    bool? soundEnabled,
+    bool? hapticEnabled,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       totalShuffles: totalShuffles ?? this.totalShuffles,
+      totalCoinTosses: totalCoinTosses ?? this.totalCoinTosses,
+      soundEnabled: soundEnabled ?? this.soundEnabled,
+      hapticEnabled: hapticEnabled ?? this.hapticEnabled,
     );
   }
 
@@ -23,6 +35,9 @@ class AppSettings {
     return {
       'themeMode': themeMode.index,
       'totalShuffles': totalShuffles,
+      'totalCoinTosses': totalCoinTosses,
+      'soundEnabled': soundEnabled,
+      'hapticEnabled': hapticEnabled,
     };
   }
 
@@ -30,8 +45,12 @@ class AppSettings {
     return AppSettings(
       themeMode: ThemeModeOption.values[map['themeMode'] as int? ?? 0],
       totalShuffles: map['totalShuffles'] as int? ?? 0,
+      totalCoinTosses: map['totalCoinTosses'] as int? ?? 0,
+      soundEnabled: map['soundEnabled'] as bool? ?? true,
+      hapticEnabled: map['hapticEnabled'] as bool? ?? true,
     );
   }
 
   static AppSettings defaults() => AppSettings();
 }
+

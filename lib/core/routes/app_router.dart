@@ -6,6 +6,7 @@ import '../../features/home/home_screen.dart';
 import '../../features/groups/groups_screen.dart';
 import '../../features/group_detail/group_detail_screen.dart';
 import '../../features/shuffle/shuffle_screen.dart';
+import '../../features/coin_toss/coin_toss_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
@@ -38,6 +39,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'groups',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: GroupsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/coin_toss',
+            name: 'coinToss',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: CoinTossScreen(),
             ),
           ),
           GoRoute(
@@ -85,8 +93,9 @@ class ScaffoldWithNavBar extends StatelessWidget {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/groups')) return 1;
-    if (location.startsWith('/history')) return 2;
-    if (location.startsWith('/settings')) return 3;
+    if (location.startsWith('/coin_toss')) return 2;
+    if (location.startsWith('/history')) return 3;
+    if (location.startsWith('/settings')) return 4;
     return 0;
   }
 
@@ -105,8 +114,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
             case 1:
               context.go('/groups');
             case 2:
-              context.go('/history');
+              context.go('/coin_toss');
             case 3:
+              context.go('/history');
+            case 4:
               context.go('/settings');
           }
         },
@@ -120,6 +131,11 @@ class ScaffoldWithNavBar extends StatelessWidget {
             icon: Icon(Icons.group_outlined),
             selectedIcon: Icon(Icons.group),
             label: 'Groups',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.monetization_on_outlined),
+            selectedIcon: Icon(Icons.monetization_on),
+            label: 'Coin Toss',
           ),
           NavigationDestination(
             icon: Icon(Icons.history_outlined),

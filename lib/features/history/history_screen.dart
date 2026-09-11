@@ -5,15 +5,21 @@ import 'package:intl/intl.dart';
 import '../../providers/providers.dart';
 import '../../models/models.dart';
 
-class HistoryScreen extends ConsumerWidget {
+class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends ConsumerState<HistoryScreen> {
+  int _selectedTab = 0; // 0 = Name Shuffles, 1 = Coin Tosses
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final history = ref.watch(historyProvider);
-
-    final groupedHistory = _groupByDate(history);
+    final coinTossHistory = ref.watch(coinTossProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -21,85 +27,226 @@ class HistoryScreen extends ConsumerWidget {
           SliverAppBar.large(
             title: const Text('History'),
             actions: [
-              if (history.isNotEmpty)
+              if ((_selectedTab == 0 && history.isNotEmpty) ||
+                  (_selectedTab == 1 && coinTossHistory.isNotEmpty))
                 IconButton(
-                  onPressed: () => _confirmClearAll(context, ref),
+                  onPressed: () {
+                    if (_selectedTab == 0) {
+                      _confirmClearShuffleHistory(context, ref);
+                    } else {
+                      _confirmClearCoinHistory(context, ref);
+                    }
+                  },
                   icon: const Icon(Icons.delete_sweep_outlined),
-                  tooltip: 'Clear All',
+                  tooltip: 'Clear History',
                 ),
             ],
           ),
-          if (history.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.history_outlined,
-                        size: 80,
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.3),
-                      )
-                          .animate()
-                          .fadeIn(delay: 200.ms)
-                          .scale(begin: const Offset(0.8, 0.8)),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No History',
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your shuffle results will appear here.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SegmentedButton<int>(
+                segments: const [
+                  ButtonSegment(
+                    value: 0,
+                    label: Text('Name Shuffles'),
+                    icon: Icon(Icons.shuffle),
                   ),
-                ),
+                  ButtonSegment(
+                    value: 1,
+                    label: Text('Coin Tosses'),
+                    icon: Icon(Icons.monetization_on_outlined),
+                  ),
+                ],
+                selected: {_selectedTab},
+                onSelectionChanged: (set) {
+                  setState(() {
+                    _selectedTab = set.first;
+                  });
+                },
               ),
-            )
+            ),
+          ),
+          if (_selectedTab == 0)
+            ..._buildShuffleHistorySlivers(context, theme, history)
           else
-            ...groupedHistory.entries.map((entry) {
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        entry.key,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ).animate().fadeIn(),
-                      const SizedBox(height: 8),
-                      ...entry.value.map((historyEntry) {
-                        return _HistoryCard(
-                          entry: historyEntry,
-                          onDelete: () {
-                            ref
-                                .read(historyProvider.notifier)
-                                .deleteEntry(historyEntry.id);
-                          },
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              );
-            }),
+            ..._buildCoinTossHistorySlivers(context, theme, coinTossHistory),
           const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildShuffleHistorySlivers(
+      BuildContext context, ThemeData theme, List<HistoryEntry> history) {
+    if (history.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.history_outlined,
+                    size: 80,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  )
+                      .animate()
+                      .fadeIn(delay: 200.ms)
+                      .scale(begin: const Offset(0.8, 0.8)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Shuffle History',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your name shuffle results will appear here.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    final groupedHistory = _groupByDate(history);
+    final slivers = <Widget>[];
+
+    for (final entry in groupedHistory.entries) {
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.key,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ).animate().fadeIn(),
+                const SizedBox(height: 8),
+                ...entry.value.map((historyEntry) {
+                  return _HistoryCard(
+                    entry: historyEntry,
+                    onDelete: () {
+                      ref
+                          .read(historyProvider.notifier)
+                          .deleteEntry(historyEntry.id);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    return slivers;
+  }
+
+  List<Widget> _buildCoinTossHistorySlivers(
+      BuildContext context, ThemeData theme, List<CoinTossEntry> coinTosses) {
+    if (coinTosses.isEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.monetization_on_outlined,
+                    size: 80,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  )
+                      .animate()
+                      .fadeIn(delay: 200.ms)
+                      .scale(begin: const Offset(0.8, 0.8)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No Coin Toss History',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Your coin toss decisions will appear here.',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ];
+    }
+
+    final timeFormat = DateFormat('h:mm a · MMM d');
+
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.all(16),
+        sliver: SliverList.builder(
+          itemCount: coinTosses.length,
+          itemBuilder: (context, index) {
+            final entry = coinTosses[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: entry.isHeads
+                        ? const Color(0xFFFEF9C3)
+                        : theme.colorScheme.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    entry.emoji,
+                    style: const TextStyle(fontSize: 20),
+                  ),
+                ),
+                title: Text(
+                  entry.resultText,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: entry.isHeads
+                        ? const Color(0xFFCA8A04)
+                        : theme.colorScheme.primary,
+                  ),
+                ),
+                subtitle: Text(
+                  timeFormat.format(entry.tossedAt),
+                  style: theme.textTheme.bodySmall,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  onPressed: () {
+                    ref.read(coinTossProvider.notifier).deleteEntry(entry.id);
+                  },
+                ),
+              ),
+            ).animate().fadeIn(delay: Duration(milliseconds: index * 30));
+          },
+        ),
+      ),
+    ];
   }
 
   Map<String, List<HistoryEntry>> _groupByDate(List<HistoryEntry> entries) {
@@ -131,7 +278,7 @@ class HistoryScreen extends ConsumerWidget {
     return grouped;
   }
 
-  void _confirmClearAll(BuildContext context, WidgetRef ref) {
+  void _confirmClearShuffleHistory(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -140,9 +287,8 @@ class HistoryScreen extends ConsumerWidget {
           color: Theme.of(context).colorScheme.error,
           size: 32,
         ),
-        title: const Text('Clear All History?'),
-        content:
-            const Text('This will permanently remove all shuffle history.'),
+        title: const Text('Clear Shuffle History?'),
+        content: const Text('This will permanently remove all name shuffle history.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -151,6 +297,37 @@ class HistoryScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () {
               ref.read(historyProvider.notifier).clearAll();
+              Navigator.of(context).pop();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Clear All'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmClearCoinHistory(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.delete_sweep_outlined,
+          color: Theme.of(context).colorScheme.error,
+          size: 32,
+        ),
+        title: const Text('Clear Coin History?'),
+        content: const Text('This will permanently remove all coin toss history.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              ref.read(coinTossProvider.notifier).clearHistory();
               Navigator.of(context).pop();
             },
             style: FilledButton.styleFrom(

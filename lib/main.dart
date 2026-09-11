@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,19 +10,33 @@ import 'providers/providers.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
     ),
   );
 
-  await AppRepository.instance.init();
+  try {
+    await AppRepository.instance.init();
+  } catch (e, stack) {
+    debugPrint('Database initialization error: $e\n$stack');
+  }
 
-  runApp(
-    const ProviderScope(
-      child: ShuffleMasterApp(),
-    ),
-  );
+  runZonedGuarded(() {
+    runApp(
+      const ProviderScope(
+        child: ShuffleMasterApp(),
+      ),
+    );
+  }, (error, stack) {
+    FlutterError.presentError(
+      FlutterErrorDetails(exception: error, stack: stack),
+    );
+  });
 }
 
 class ShuffleMasterApp extends ConsumerWidget {
@@ -30,7 +45,7 @@ class ShuffleMasterApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final settingsNotifier = ref.watch(settingsProvider.notifier);
 
     return MaterialApp.router(
       title: 'Shuffle Master',

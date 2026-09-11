@@ -39,11 +39,11 @@ class NameEntry {
 
   factory NameEntry.fromMap(Map<String, dynamic> map) {
     return NameEntry(
-      id: map['id'] as String?,
-      name: map['name'] as String,
-      isFavorite: map['isFavorite'] as bool? ?? false,
+      id: map['id']?.toString(),
+      name: map['name']?.toString() ?? '',
+      isFavorite: map['isFavorite'] == true,
       createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
+          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
     );
   }

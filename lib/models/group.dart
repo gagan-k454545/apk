@@ -51,17 +51,18 @@ class Group {
 
   factory Group.fromMap(Map<String, dynamic> map) {
     return Group(
-      id: map['id'] as String?,
-      name: map['name'] as String,
+      id: map['id']?.toString(),
+      name: map['name']?.toString() ?? 'Group',
       members: (map['members'] as List<dynamic>?)
-              ?.map((m) => NameEntry.fromMap(m as Map<String, dynamic>))
+              ?.whereType<Map>()
+              .map((m) => NameEntry.fromMap(Map<String, dynamic>.from(m)))
               .toList() ??
           [],
       createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'] as String)
+          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
       updatedAt: map['updatedAt'] != null
-          ? DateTime.parse(map['updatedAt'] as String)
+          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
     );
   }

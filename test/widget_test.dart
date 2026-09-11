@@ -82,6 +82,29 @@ void main() {
       expect(restored.members.length, 1);
       expect(restored.members.first.name, 'John');
     });
+
+    test('should deserialize untyped Hive Map<dynamic, dynamic> without throw', () {
+      final untypedMap = <dynamic, dynamic>{
+        'id': 'g123',
+        'name': 'Classroom',
+        'members': <dynamic>[
+          <dynamic, dynamic>{
+            'id': 'n1',
+            'name': 'Gagan',
+            'isFavorite': true,
+            'createdAt': '2026-09-10T10:00:00.000Z',
+          }
+        ],
+        'createdAt': '2026-09-10T10:00:00.000Z',
+        'updatedAt': '2026-09-10T10:00:00.000Z',
+      };
+      final restored = Group.fromMap(Map<String, dynamic>.from(untypedMap));
+      expect(restored.id, 'g123');
+      expect(restored.name, 'Classroom');
+      expect(restored.members.length, 1);
+      expect(restored.members.first.name, 'Gagan');
+      expect(restored.members.first.isFavorite, true);
+    });
   });
 
   group('HistoryEntry', () {
@@ -122,17 +145,26 @@ void main() {
       final settings = AppSettings.defaults();
       expect(settings.themeMode, ThemeModeOption.system);
       expect(settings.totalShuffles, 0);
+      expect(settings.totalCoinTosses, 0);
+      expect(settings.soundEnabled, true);
+      expect(settings.hapticEnabled, true);
     });
 
     test('should serialize to map and back', () {
       final settings = AppSettings(
         themeMode: ThemeModeOption.dark,
         totalShuffles: 42,
+        totalCoinTosses: 15,
+        soundEnabled: false,
+        hapticEnabled: false,
       );
       final map = settings.toMap();
       final restored = AppSettings.fromMap(map);
       expect(restored.themeMode, ThemeModeOption.dark);
       expect(restored.totalShuffles, 42);
+      expect(restored.totalCoinTosses, 15);
+      expect(restored.soundEnabled, false);
+      expect(restored.hapticEnabled, false);
     });
   });
 
