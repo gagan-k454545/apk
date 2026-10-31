@@ -14,22 +14,23 @@ import 'widgets/quick_action_tile.dart';
 import 'widgets/stat_tile.dart';
 
 /// Pixel-faithful replication of the Shuffle Master Home Screen matching the Master Prompt:
-/// - Page Background: warm cream (--bg-app #FBF6EE) + subtle radial peach glow
+/// - Light warm-cream page background (--bg-app #FBF6EE) + faint peach/mint radial glow
 /// - Staggered 380ms entrance fade-up
 /// - Section 5.2 AppHeader
-/// - Section 5.3 HeroDecisionCard (Playfair Display 800, 3D box, floating name chips)
-/// - Section 5.4 Feature Cards (Name Shuffle & Coin Toss)
+/// - Section 5.3 HeroDecisionCard (Playfair Display 800, real 3D box crop with floating name chips)
+/// - Section 5.4 Feature Cards (Name Shuffle & Coin Toss with cropped real 3D assets)
 /// - Section 5.5 Quick Actions (4 pastel squircle tiles)
 /// - Section 5.6 Stats Strip (single card with 4 columns, dividers, count-up animation)
 /// - Section 5.7 Your Groups (header, + New Group button, horizontal cards, empty state)
+/// - Requirement 4: bottom padding = nav height (64) + FAB overhang (18) + safe-area + 24px
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final totalBottomPadding = 64.0 + 18.0 + bottomInset + 24.0;
 
     final groups = ref.watch(groupsProvider);
     final history = ref.watch(historyProvider);
@@ -59,48 +60,44 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: isDark
-          ? const Color(0xFF141D16)
-          : PremiumDesignTokens.bgApp,
+      backgroundColor: PremiumDesignTokens.bgApp,
       body: Stack(
         children: [
           // Background subtle peach and mint radial glows (Section 4.2)
-          if (!isDark) ...[
-            Positioned(
-              top: -60,
-              left: -40,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PremiumDesignTokens.green100.withValues(alpha: 0.35),
-                      Colors.transparent,
-                    ],
-                  ),
+          Positioned(
+            top: -60,
+            left: -40,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    PremiumDesignTokens.green100.withValues(alpha: 0.35),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
-            Positioned(
-              bottom: 80,
-              right: -50,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PremiumDesignTokens.bgAppGlow.withValues(alpha: 0.6),
-                      Colors.transparent,
-                    ],
-                  ),
+          ),
+          Positioned(
+            bottom: 80,
+            right: -50,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    PremiumDesignTokens.bgAppGlow.withValues(alpha: 0.6),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
-          ],
+          ),
 
           // Single Scroll Column
           SafeArea(
@@ -199,8 +196,8 @@ class HomeScreen extends ConsumerWidget {
                 // 4. Quick Actions (index 3)
                 SliverToBoxAdapter(
                   child: wrapStagger(
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -209,31 +206,26 @@ class HomeScreen extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? const Color(0xFFEAF1EB)
-                                  : PremiumDesignTokens.textStrong,
+                              color: PremiumDesignTokens.textStrong,
                             ),
                           ),
-                          PressableScale(
-                            onTap: () => context.go('/groups'),
-                            child: const Row(
-                              children: [
-                                Text(
-                                  'See All',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: PremiumDesignTokens.textMuted,
-                                  ),
-                                ),
-                                SizedBox(width: 4),
-                                Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 14,
+                          Row(
+                            children: [
+                              Text(
+                                'See All',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                   color: PremiumDesignTokens.textMuted,
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 14,
+                                color: PremiumDesignTokens.textMuted,
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -375,14 +367,12 @@ class HomeScreen extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Text(
+                          const Text(
                             'Your Groups',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: isDark
-                                  ? const Color(0xFFEAF1EB)
-                                  : PremiumDesignTokens.textStrong,
+                              color: PremiumDesignTokens.textStrong,
                             ),
                           ),
                           const Spacer(),
@@ -448,7 +438,7 @@ class HomeScreen extends ConsumerWidget {
                               itemBuilder: (context, index) {
                                 final g = groups[index];
                                 final icon = _getGroupIcon(g.name);
-                                final iconTileBg = _getGroupIconBg(index, isDark);
+                                final iconTileBg = _getGroupIconBg(index);
                                 final iconColor = _getGroupIconColor(index);
 
                                 return GroupCard(
@@ -468,8 +458,10 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // Bottom padding = nav height (64) + 24px = 88px so content never clips behind floating nav
-                const SliverPadding(padding: EdgeInsets.only(bottom: 92)),
+                // Bottom padding = nav height (64) + FAB overhang (18) + safe-area + 24px
+                SliverPadding(
+                  padding: EdgeInsets.only(bottom: totalBottomPadding),
+                ),
               ],
             ),
           ),
@@ -492,8 +484,7 @@ class HomeScreen extends ConsumerWidget {
     return Icons.groups_rounded; // Users
   }
 
-  static Color _getGroupIconBg(int index, bool isDark) {
-    if (isDark) return const Color(0xFF263327);
+  static Color _getGroupIconBg(int index) {
     const bgs = [
       PremiumDesignTokens.green100,
       PremiumDesignTokens.peach100,

@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Top header row matching Section 5.2 of the Master Prompt:
+/// Top header row matching Section 5.2 of the Master Prompt (Strictly Light Theme):
 /// - Left: 48x48 app logo tile, radius 14, gradPrimary, white Shuffle icon, inner highlight, shadow
 /// - Title: "Shuffle Master" (Shuffle in --text-strong, Master in --green-600)
 /// - Tagline: "Randomize anything. Decide instantly."
@@ -13,9 +13,6 @@ class AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: PremiumDesignTokens.sp4,
@@ -52,18 +49,15 @@ class AppHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'Shuffle ',
                     style: TextStyle(
-                      fontFamily: theme.textTheme.titleLarge?.fontFamily,
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                       letterSpacing: -0.4,
-                      color: isDark
-                          ? const Color(0xFFEAF1EB)
-                          : PremiumDesignTokens.textStrong,
+                      color: PremiumDesignTokens.textStrong,
                     ),
-                    children: const [
+                    children: [
                       TextSpan(
                         text: 'Master',
                         style: TextStyle(
@@ -75,14 +69,12 @@ class AppHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
+                const Text(
                   'Randomize anything. Decide instantly.',
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? const Color(0xFFA6B7AA)
-                        : PremiumDesignTokens.textBody,
+                    color: PremiumDesignTokens.textBody,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -99,29 +91,23 @@ class AppHeader extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? const [Color(0xFF263327), Color(0xFF1F2B21)]
-                      : const [
-                          PremiumDesignTokens.peach50,
-                          Color(0xFFF7ECE0),
-                        ],
+                gradient: const LinearGradient(
+                  colors: [
+                    PremiumDesignTokens.peach50,
+                    Color(0xFFF7ECE0),
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF384A3B)
-                      : PremiumDesignTokens.borderGlass,
+                  color: PremiumDesignTokens.borderGlass,
                 ),
                 boxShadow: PremiumDesignTokens.shadowSm,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.person_rounded,
                 size: 22,
-                color: isDark
-                    ? const Color(0xFFBACDBF)
-                    : PremiumDesignTokens.textStrong,
+                color: PremiumDesignTokens.textStrong,
               ),
             ),
           ),

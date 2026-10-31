@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'database/app_repository.dart';
-import 'providers/providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +23,10 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Color(0xFFFBF6EE),
+      systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
@@ -46,14 +49,13 @@ class ShuffleMasterApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
-    final settingsNotifier = ref.watch(settingsProvider.notifier);
 
     return MaterialApp.router(
       title: 'Shuffle Master',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme(),
       darkTheme: AppTheme.darkTheme(),
-      themeMode: settingsNotifier.flutterThemeMode,
+      themeMode: ThemeMode.light, // Strictly force light warm-cream theme
       routerConfig: router,
     );
   }

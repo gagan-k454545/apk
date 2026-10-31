@@ -2,7 +2,7 @@ enum ThemeModeOption { system, light, dark }
 
 class AppSettings {
   AppSettings({
-    this.themeMode = ThemeModeOption.system,
+    this.themeMode = ThemeModeOption.light,
     this.totalShuffles = 0,
     this.totalCoinTosses = 0,
     this.soundEnabled = true,
@@ -31,6 +31,8 @@ class AppSettings {
     );
   }
 
+  factory AppSettings.defaults() => AppSettings();
+
   Map<String, dynamic> toMap() {
     return {
       'themeMode': themeMode.index,
@@ -43,14 +45,11 @@ class AppSettings {
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     return AppSettings(
-      themeMode: ThemeModeOption.values[map['themeMode'] as int? ?? 0],
+      themeMode: ThemeModeOption.values[map['themeMode'] as int? ?? 1],
       totalShuffles: map['totalShuffles'] as int? ?? 0,
       totalCoinTosses: map['totalCoinTosses'] as int? ?? 0,
       soundEnabled: map['soundEnabled'] as bool? ?? true,
       hapticEnabled: map['hapticEnabled'] as bool? ?? true,
     );
   }
-
-  static AppSettings defaults() => AppSettings();
 }
-

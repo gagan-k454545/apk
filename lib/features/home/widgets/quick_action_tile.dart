@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Quick Action Tile matching Section 5.5 of the Master Prompt:
+/// Quick Action Tile matching Section 5.5 of the Master Prompt (Strictly Light Theme):
 /// - Radius 20, height ~72, padding 8, column-centered
 /// - 34x34 icon tile (radius 11) with gradient
 /// - 12px label in --text-strong
@@ -27,9 +27,6 @@ class QuickActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return PressableScale(
       onTap: onTap,
       targetScale: 0.96,
@@ -37,13 +34,11 @@ class QuickActionTile extends StatelessWidget {
         height: 74,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF222E26) : null,
-          gradient: isDark ? null : backgroundGradient,
+          color: backgroundGradient == null ? backgroundColor : null,
+          gradient: backgroundGradient,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isDark
-                ? const Color(0xFF334336)
-                : PremiumDesignTokens.borderGlass,
+            color: PremiumDesignTokens.borderGlass,
           ),
           boxShadow: PremiumDesignTokens.shadowSm,
         ),
@@ -78,12 +73,10 @@ class QuickActionTile extends StatelessWidget {
             // 12px Label
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isDark
-                    ? const Color(0xFFEAF1EB)
-                    : PremiumDesignTokens.textStrong,
+                color: PremiumDesignTokens.textStrong,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,

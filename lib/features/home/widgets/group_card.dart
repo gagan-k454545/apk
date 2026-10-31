@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Reusable Group Card matching Section 5.7 of the Master Prompt:
-/// - 116px wide, height ~74, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
+/// Reusable Group Card matching Section 5.7 of the Master Prompt (Strictly Light Theme):
+/// - 120px wide, height ~78, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
 /// - Top-left: 32x32 icon tile (radius 10)
 /// - Top-right: 32px hit area MoreVertical (kebab) button
-/// - Bottom: Group name (14/600) + "12 names" (12/400 muted)
+/// - Bottom: Group name (13/600) + "12 names" (11/400 muted)
 class GroupCard extends StatelessWidget {
   const GroupCard({
     super.key,
@@ -29,9 +29,6 @@ class GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return PressableScale(
       onTap: onTap,
       targetScale: 0.96,
@@ -40,12 +37,10 @@ class GroupCard extends StatelessWidget {
         height: 78,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E2820) : PremiumDesignTokens.surfaceSoft,
+          color: PremiumDesignTokens.surfaceSoft,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isDark
-                ? const Color(0xFF334336)
-                : PremiumDesignTokens.borderSoft,
+            color: PremiumDesignTokens.borderSoft,
           ),
           boxShadow: PremiumDesignTokens.shadowSm,
         ),
@@ -75,16 +70,14 @@ class GroupCard extends StatelessWidget {
                 GestureDetector(
                   onTap: onMenuTap,
                   behavior: HitTestBehavior.opaque,
-                  child: SizedBox(
+                  child: const SizedBox(
                     width: 32,
                     height: 32,
                     child: Center(
                       child: Icon(
                         Icons.more_vert_rounded,
                         size: 16,
-                        color: isDark
-                            ? const Color(0xFFA2B4A6)
-                            : PremiumDesignTokens.textMuted,
+                        color: PremiumDesignTokens.textMuted,
                       ),
                     ),
                   ),
@@ -99,24 +92,20 @@ class GroupCard extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? const Color(0xFFEAF1EB)
-                        : PremiumDesignTokens.textStrong,
+                    color: PremiumDesignTokens.textStrong,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
                   '$memberCount names',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
-                    color: isDark
-                        ? const Color(0xFFA2B4A6)
-                        : PremiumDesignTokens.textMuted,
+                    color: PremiumDesignTokens.textMuted,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -138,9 +127,6 @@ class EmptyGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return PressableScale(
       onTap: onTap,
       targetScale: 0.96,
@@ -148,9 +134,7 @@ class EmptyGroupCard extends StatelessWidget {
         width: 120,
         height: 78,
         decoration: BoxDecoration(
-          color: isDark
-              ? const Color(0xFF1E2820).withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: PremiumDesignTokens.green600.withValues(alpha: 0.4),

@@ -46,22 +46,17 @@ class _FloatingCenterActionState extends State<FloatingCenterAction>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
-
-    final haloColor = isDark
-        ? const Color(0xFF1A231C)
-        : const Color(0xFFFCFAF6);
+    const haloColor = Color(0xF5FFFCF7); // rgba(255,252,247,.95)
 
     final fab = Container(
       width: widget.size,
       height: widget.size,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: PremiumDesignTokens.gradPrimary,
         boxShadow: [
-          // Outer halo ring (0 0 0 6px ...)
+          // Outer halo ring (0 0 0 6px rgba(255,252,247,.95))
           BoxShadow(
             color: haloColor,
             spreadRadius: 5,
@@ -98,9 +93,10 @@ class _FloatingCenterActionState extends State<FloatingCenterAction>
   }
 }
 
-/// Floating Navigation Bar matching Section 5.8 of the Master Prompt:
+/// Floating Navigation Bar matching Section 5.8 & Requirement 4:
 /// - Margin horizontal 12, bottom max(12, safe-area), height ~64, radius 28
-/// - bg rgba(255,252,247,.92), borderGlass, shadowLg
+/// - bg rgba(255,252,247,.94) (light translucent cream, never dark)
+/// - borderGlass, shadowLg
 /// - 6 items plus raised center FAB:
 ///   1. Home
 ///   2. Groups
@@ -128,13 +124,8 @@ class PremiumBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final bottomInset = MediaQuery.of(context).padding.bottom;
-
-    final bgColor = isDark
-        ? const Color(0xFF1A231C).withValues(alpha: 0.95)
-        : const Color(0xFFFCFAF6).withValues(alpha: 0.95);
+    const bgColor = Color(0xF2FFFCF7); // rgba(255,252,247,.95) light translucent cream
 
     return Container(
       margin: EdgeInsets.fromLTRB(
@@ -148,9 +139,7 @@ class PremiumBottomNav extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: isDark
-              ? const Color(0xFF334336)
-              : PremiumDesignTokens.borderGlass,
+          color: PremiumDesignTokens.borderGlass,
         ),
         boxShadow: PremiumDesignTokens.shadowLg,
       ),
@@ -169,7 +158,6 @@ class PremiumBottomNav extends StatelessWidget {
                   unselectedIcon: Icons.home_outlined,
                   label: 'Home',
                   isSelected: currentIndex == 0,
-                  isDark: isDark,
                 ),
               ),
 
@@ -181,7 +169,6 @@ class PremiumBottomNav extends StatelessWidget {
                   unselectedIcon: Icons.group_outlined,
                   label: 'Groups',
                   isSelected: currentIndex == 1,
-                  isDark: isDark,
                 ),
               ),
 
@@ -205,12 +192,10 @@ class PremiumBottomNav extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.notifications_none_rounded,
                         size: 22,
-                        color: isDark
-                            ? const Color(0xFF8A9C8E)
-                            : PremiumDesignTokens.textMuted,
+                        color: PremiumDesignTokens.textMuted,
                       ),
                       if (hasUnreadAlerts)
                         Positioned(
@@ -241,7 +226,6 @@ class PremiumBottomNav extends StatelessWidget {
                   unselectedIcon: Icons.monetization_on_outlined,
                   label: 'Coin Toss',
                   isSelected: currentIndex == 2,
-                  isDark: isDark,
                 ),
               ),
 
@@ -253,7 +237,6 @@ class PremiumBottomNav extends StatelessWidget {
                   unselectedIcon: Icons.history_outlined,
                   label: 'History',
                   isSelected: currentIndex == 3,
-                  isDark: isDark,
                 ),
               ),
 
@@ -265,7 +248,6 @@ class PremiumBottomNav extends StatelessWidget {
                   unselectedIcon: Icons.settings_outlined,
                   label: 'Settings',
                   isSelected: currentIndex == 4,
-                  isDark: isDark,
                 ),
               ),
             ],
@@ -287,11 +269,8 @@ class PremiumBottomNav extends StatelessWidget {
     required IconData unselectedIcon,
     required String label,
     required bool isSelected,
-    required bool isDark,
   }) {
-    final inactiveColor = isDark
-        ? const Color(0xFF8A9C8E)
-        : PremiumDesignTokens.textMuted;
+    const inactiveColor = PremiumDesignTokens.textMuted;
 
     return PressableScale(
       onTap: () => onTap(index),
@@ -327,9 +306,7 @@ class PremiumBottomNav extends StatelessWidget {
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected
-                  ? (isDark
-                      ? const Color(0xFFD3E5D6)
-                      : PremiumDesignTokens.green800)
+                  ? PremiumDesignTokens.green800
                   : inactiveColor,
             ),
             maxLines: 1,
