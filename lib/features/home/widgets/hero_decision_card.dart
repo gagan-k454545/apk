@@ -4,14 +4,13 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// The Hero Card matching Section 5.3 & Requirement 2:
-/// - Min-height ~222px, radius 28, gradHero, borderSoft, shadowMd
-/// - Eyebrow pill: Sparkles icon + "MAKE DECISIONS EASIER"
-/// - Headline (Playfair Display 800): "Shuffle,\nPick and\nDecide" (Decide in --green-600)
-/// - Body: "Create groups, shuffle names, toss a coin and make fair decisions in seconds."
-/// - CTA button "Get Started →" (radius pill, gradPrimary, shadowButton)
-/// - The real 3D sage-green open bin with floating name chips (Aarav, Priya, Rahul, Neha)
-///   CROPPED FROM THE REFERENCE IMAGE, with gentle float animation, bleeding off bottom-right.
+/// The Hero Card matching Section 5.3 & Level 1 Surface Hierarchy:
+/// - Surface: linear-gradient(160deg, #FFFFFF 0%, #E3EFDD 100%)
+/// - Border: 1px solid rgba(27,67,50,0.12)
+/// - Shadow: Two-layer shadow [0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)]
+/// - Eyebrow pill: Solid #FFFFFF, 1px border rgba(27,67,50,0.10), small shadow
+/// - Hero Artwork: Scaled up 1.3x (width 195, height 180), anchored bottom-right,
+///   all 4 chips (Aarav, Priya, Rahul, Neha) & the 3D bin fully visible inside the card.
 class HeroDecisionCard extends StatefulWidget {
   const HeroDecisionCard({
     super.key,
@@ -52,52 +51,30 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
 
     return Container(
       width: double.infinity,
-      constraints: const BoxConstraints(minHeight: 222),
+      constraints: const BoxConstraints(minHeight: 228),
       decoration: BoxDecoration(
         gradient: PremiumDesignTokens.gradHero,
         borderRadius: BorderRadius.circular(PremiumDesignTokens.rXl),
         border: Border.all(
-          color: PremiumDesignTokens.borderSoft,
+          color: PremiumDesignTokens.cardBorder,
         ),
-        boxShadow: PremiumDesignTokens.shadowMd,
+        boxShadow: PremiumDesignTokens.cardShadow,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(PremiumDesignTokens.rXl),
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Decorative subtle organic ambient glows
+            // Soft mint decorative circle (60% opacity, no grey, no blur filter)
             Positioned(
-              top: -30,
-              right: -30,
+              top: -24,
+              right: 12,
               child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PremiumDesignTokens.green100.withValues(alpha: 0.5),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -40,
-              right: 20,
-              child: Container(
-                width: 180,
+                width: 140,
                 height: 140,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      PremiumDesignTokens.peach100.withValues(alpha: 0.45),
-                      Colors.transparent,
-                    ],
-                  ),
+                  color: Color(0x99DCEBD8), // #DCEBD8 at 60% opacity
                 ),
               ),
             ),
@@ -108,27 +85,34 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left Content Column (~55%)
+                  // Left Content Column (~54%)
                   Expanded(
-                    flex: 6,
+                    flex: 54,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Eyebrow Chip
+                        // Level 2 Eyebrow Chip: Solid #FFFFFF + 1px border rgba(27,67,50,0.10) + small shadow
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(
                               PremiumDesignTokens.rPill,
                             ),
                             border: Border.all(
-                              color: PremiumDesignTokens.borderSoft,
+                              color: PremiumDesignTokens.innerBorder,
                             ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0D1B4332),
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
                           ),
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
@@ -228,20 +212,20 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
                     ),
                   ),
 
-                  // Right Artwork Column (~45%) with Cropped 3D Box & Floating Cards
+                  // Right Artwork Column (~46%) with Scaled 3D Box & Floating Cards
                   Expanded(
-                    flex: 5,
+                    flex: 46,
                     child: SizedBox(
                       height: 220,
                       child: Stack(
                         clipBehavior: Clip.none,
-                        alignment: Alignment.centerRight,
+                        alignment: Alignment.bottomRight,
                         children: [
                           Positioned(
-                            right: -14,
-                            bottom: -10,
-                            width: 175,
-                            height: 175,
+                            right: -2,
+                            bottom: 2,
+                            width: 195,
+                            height: 182,
                             child: reduceMotion
                                 ? Image.asset(
                                     'assets/ui/hero-shuffle-box.png',
@@ -255,7 +239,7 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
                                               _floatController.value *
                                                   math.pi *
                                                   2) *
-                                          4.0;
+                                          3.5;
                                       return Transform.translate(
                                         offset: Offset(0, floatY),
                                         child: child,

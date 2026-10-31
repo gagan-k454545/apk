@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../theme/premium_design_tokens.dart';
 import 'pressable_scale.dart';
 
-/// The center tactile Floating Shuffle Button matching Section 5.8:
+/// Center tactile Floating Shuffle Button matching Section 5.8:
 /// - 56x56 circle, gradPrimary, white Shuffle icon 26px
 /// - Raised ~18px above the bar
-/// - Outer halo ring (0 0 0 6px rgba(255,252,247,.95)) + shadowLg
+/// - Outer halo ring (0 0 0 6px rgba(255,255,255,.96)) + shadow
 /// - Subtle idle pulse (scale 1.0 to 1.04, 2.4s) with reduced motion fallback
 /// - Tactile scale (.92) on press
 class FloatingCenterAction extends StatefulWidget {
@@ -47,7 +47,7 @@ class _FloatingCenterActionState extends State<FloatingCenterAction>
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
-    const haloColor = Color(0xF5FFFCF7); // rgba(255,252,247,.95)
+    const haloColor = Color(0xF5FFFFFF); // rgba(255,255,255,0.96)
 
     final fab = Container(
       width: widget.size,
@@ -56,12 +56,16 @@ class _FloatingCenterActionState extends State<FloatingCenterAction>
         shape: BoxShape.circle,
         gradient: PremiumDesignTokens.gradPrimary,
         boxShadow: [
-          // Outer halo ring (0 0 0 6px rgba(255,252,247,.95))
+          // Outer halo ring (0 0 0 6px rgba(255,255,255,.96))
           BoxShadow(
             color: haloColor,
-            spreadRadius: 5,
+            spreadRadius: 6,
           ),
-          ...PremiumDesignTokens.shadowLg,
+          BoxShadow(
+            color: Color(0x381B4332), // 0 14px 34px rgba(27,67,50,0.22)
+            blurRadius: 32,
+            offset: Offset(0, 12),
+          ),
         ],
       ),
       child: Center(
@@ -93,19 +97,11 @@ class _FloatingCenterActionState extends State<FloatingCenterAction>
   }
 }
 
-/// Floating Navigation Bar matching Section 5.8 & Requirement 4:
-/// - Margin horizontal 12, bottom max(12, safe-area), height ~64, radius 28
-/// - bg rgba(255,252,247,.94) (light translucent cream, never dark)
-/// - borderGlass, shadowLg
-/// - 6 items plus raised center FAB:
-///   1. Home
-///   2. Groups
-///   3. Alerts (Bell with unread dot)
-///   [Center FAB]
-///   4. Coin Toss
-///   5. History
-///   6. Settings
-/// - Active item = dark green pill (gradPrimary, white icon, 8x16, radius 18) with label in --green-800 bold
+/// Floating Navigation Bar matching Section 5.8 & Level 1 Surface Hierarchy:
+/// - Near-opaque: background rgba(255,255,255,0.96)
+/// - Border: 1px rgba(27,67,50,0.10)
+/// - Shadow: 0 -2px 0 rgba(255,255,255,0.8), 0 14px 34px rgba(27,67,50,0.20)
+/// - Balanced layout avoiding label collision around center FAB
 class PremiumBottomNav extends StatelessWidget {
   const PremiumBottomNav({
     super.key,
@@ -125,7 +121,7 @@ class PremiumBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const bgColor = Color(0xF2FFFCF7); // rgba(255,252,247,.95) light translucent cream
+    const bgColor = Color(0xF5FFFFFF); // rgba(255,255,255,0.96) near-opaque
 
     return Container(
       margin: EdgeInsets.fromLTRB(
@@ -139,19 +135,30 @@ class PremiumBottomNav extends StatelessWidget {
         color: bgColor,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: PremiumDesignTokens.borderGlass,
+          color: const Color(0x1A1B4332), // rgba(27,67,50,0.10)
         ),
-        boxShadow: PremiumDesignTokens.shadowLg,
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0xCCFFFFFF), // 0 -2px 0 rgba(255,255,255,0.8)
+            offset: Offset(0, -2),
+          ),
+          BoxShadow(
+            color: Color(0x331B4332), // 0 14px 34px rgba(27,67,50,0.20)
+            blurRadius: 34,
+            offset: Offset(0, 14),
+          ),
+        ],
       ),
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // 6 Navigation Tab Items
+          // Navigation Tab Items with Equal Clearance Around Center FAB
           Row(
             children: [
               // 1. Home (index 0)
               Expanded(
+                flex: 12,
                 child: _buildTabItem(
                   index: 0,
                   icon: Icons.home_rounded,
@@ -163,6 +170,7 @@ class PremiumBottomNav extends StatelessWidget {
 
               // 2. Groups (index 1)
               Expanded(
+                flex: 12,
                 child: _buildTabItem(
                   index: 1,
                   icon: Icons.groups_rounded,
@@ -172,8 +180,9 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // 3. Alerts (Bell with optional orange dot)
-              Expanded(
+              // 3. Alerts (Bell with optional orange dot - Icon Only)
+              SizedBox(
+                width: 36,
                 child: PressableScale(
                   onTap: () {
                     if (onAlertsTap != null) {
@@ -200,7 +209,7 @@ class PremiumBottomNav extends StatelessWidget {
                       if (hasUnreadAlerts)
                         Positioned(
                           top: 18,
-                          right: 14,
+                          right: 8,
                           child: Container(
                             width: 6,
                             height: 6,
@@ -215,11 +224,12 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // Spacer gap for Center Raised FAB
-              const SizedBox(width: 58),
+              // Equal Center Clearance for Raised FAB
+              const SizedBox(width: 62),
 
               // 4. Coin Toss (index 2)
               Expanded(
+                flex: 12,
                 child: _buildTabItem(
                   index: 2,
                   icon: Icons.monetization_on_rounded,
@@ -231,6 +241,7 @@ class PremiumBottomNav extends StatelessWidget {
 
               // 5. History (index 3)
               Expanded(
+                flex: 12,
                 child: _buildTabItem(
                   index: 3,
                   icon: Icons.history_rounded,
@@ -242,6 +253,7 @@ class PremiumBottomNav extends StatelessWidget {
 
               // 6. Settings (index 4)
               Expanded(
+                flex: 12,
                 child: _buildTabItem(
                   index: 4,
                   icon: Icons.settings_rounded,
@@ -284,7 +296,7 @@ class PremiumBottomNav extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(
-              horizontal: isSelected ? 14 : 6,
+              horizontal: isSelected ? 12 : 4,
               vertical: 3,
             ),
             decoration: BoxDecoration(

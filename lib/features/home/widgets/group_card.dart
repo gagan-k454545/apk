@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Reusable Group Card matching Section 5.7 of the Master Prompt (Strictly Light Theme):
-/// - 124px wide, height 94px, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
-/// - Top-left: 30x30 icon tile (radius 10)
-/// - Top-right: MoreVertical (kebab) button
-/// - Spacer for adaptive vertical breathing room (prevents font scaling overflow)
+/// Reusable Group Card matching Section 5.7 & Level 1 Surface Hierarchy:
+/// - 124px wide, height 94px, radius 18
+/// - Surface: linear-gradient(160deg, #FFFFFF 0%, #FBF7F0 100%)
+/// - Border: 1px solid rgba(27,67,50,0.12)
+/// - Shadow: Two-layer shadow [0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)]
+/// - Top-left: 30x30 icon tile with visible border
+/// - Spacer for vertical breathing room
 /// - Bottom: Group name (13/600) + "12 names" (11/400 muted)
 class GroupCard extends StatelessWidget {
   const GroupCard({
@@ -38,12 +40,12 @@ class GroupCard extends StatelessWidget {
         height: 94,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: PremiumDesignTokens.surfaceSoft,
+          gradient: PremiumDesignTokens.gradNeutralCard,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: PremiumDesignTokens.borderSoft,
+            color: PremiumDesignTokens.cardBorder,
           ),
-          boxShadow: PremiumDesignTokens.shadowSm,
+          boxShadow: PremiumDesignTokens.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,6 +60,9 @@ class GroupCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: iconTileBg,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: PremiumDesignTokens.innerBorder,
+                    ),
                   ),
                   child: Center(
                     child: Icon(
@@ -136,12 +141,13 @@ class EmptyGroupCard extends StatelessWidget {
         width: 124,
         height: 94,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.6),
+          color: Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: PremiumDesignTokens.green600.withValues(alpha: 0.4),
+            color: PremiumDesignTokens.green600.withValues(alpha: 0.5),
             width: 1.2,
           ),
+          boxShadow: PremiumDesignTokens.cardShadow,
         ),
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,16 +14,13 @@ import 'widgets/hero_decision_card.dart';
 import 'widgets/quick_action_tile.dart';
 import 'widgets/stat_tile.dart';
 
-/// Pixel-faithful replication of the Shuffle Master Home Screen matching the Master Prompt:
-/// - Light warm-cream page background (--bg-app #FBF6EE) + faint peach/mint radial glow
-/// - Staggered 380ms entrance fade-up
-/// - Section 5.2 AppHeader
-/// - Section 5.3 HeroDecisionCard (Playfair Display 800, real 3D box crop with floating name chips)
-/// - Section 5.4 Feature Cards (Name Shuffle & Coin Toss with cropped real 3D assets)
-/// - Section 5.5 Quick Actions (4 pastel squircle tiles)
-/// - Section 5.6 Stats Strip (single card with 4 columns, dividers, count-up animation)
-/// - Section 5.7 Your Groups (header, + New Group button, horizontal cards, empty state)
-/// - Requirement 4: bottom padding = nav height (64) + FAB overhang (18) + safe-area + 24px
+/// Pixel-faithful replication of the Shuffle Master Home Screen matching the 3-Level Surface Hierarchy:
+/// - Level 0: Warm sand page background (--bg-app #F1E8DA) with faint mint radial glow at top-left (<= 0.35 opacity).
+///   All washing-out peach glow gradients & blurred smudge blobs removed.
+/// - Level 1: Cards start near-white at top (linear-gradient 160deg #FFFFFF to pastel tint),
+///   1px border rgba(27,67,50,0.12), two-layer shadow [0 1px 2px, 0 10px 28px].
+/// - Level 2: Inner elements (solid white chips with border & shadow, solid tinted arrow buttons).
+/// - Bottom Nav: Near-opaque with bottom fade (transparent to #F1E8DA, 40px) above it.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -60,10 +58,10 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: PremiumDesignTokens.bgApp,
+      backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #F1E8DA
       body: Stack(
         children: [
-          // Background subtle peach and mint radial glows (Section 4.2)
+          // Single very faint mint radial at top-left (opacity <= 0.35, Section 1)
           Positioned(
             top: -60,
             left: -40,
@@ -74,24 +72,7 @@ class HomeScreen extends ConsumerWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    PremiumDesignTokens.green100.withValues(alpha: 0.35),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 80,
-            right: -50,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    PremiumDesignTokens.bgAppGlow.withValues(alpha: 0.6),
+                    const Color(0xFFDCEBD8).withValues(alpha: 0.32),
                     Colors.transparent,
                   ],
                 ),
@@ -245,15 +226,9 @@ class HomeScreen extends ConsumerWidget {
                             child: QuickActionTile(
                               icon: Icons.shuffle_rounded,
                               label: 'Shuffle names',
-                              backgroundColor: PremiumDesignTokens.green100,
-                              backgroundGradient: const LinearGradient(
-                                colors: [
-                                  PremiumDesignTokens.green100,
-                                  PremiumDesignTokens.green50,
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
+                              backgroundColor: PremiumDesignTokens.surfaceSoft,
+                              backgroundGradient:
+                                  PremiumDesignTokens.gradNeutralCard,
                               iconTileGradient:
                                   PremiumDesignTokens.gradPrimary,
                               onTap: () {
@@ -270,15 +245,9 @@ class HomeScreen extends ConsumerWidget {
                             child: QuickActionTile(
                               icon: Icons.monetization_on_rounded,
                               label: 'Toss Coin',
-                              backgroundColor: PremiumDesignTokens.peach100,
-                              backgroundGradient: const LinearGradient(
-                                colors: [
-                                  PremiumDesignTokens.peach100,
-                                  PremiumDesignTokens.peach50,
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
+                              backgroundColor: PremiumDesignTokens.surfaceSoft,
+                              backgroundGradient:
+                                  PremiumDesignTokens.gradNeutralCard,
                               iconTileGradient:
                                   PremiumDesignTokens.gradOrange,
                               onTap: () => context.go('/coin_toss'),
@@ -289,15 +258,9 @@ class HomeScreen extends ConsumerWidget {
                             child: QuickActionTile(
                               icon: Icons.group_add_rounded,
                               label: 'Create Group',
-                              backgroundColor: PremiumDesignTokens.teal100,
-                              backgroundGradient: const LinearGradient(
-                                colors: [
-                                  PremiumDesignTokens.teal100,
-                                  PremiumDesignTokens.teal50,
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
+                              backgroundColor: PremiumDesignTokens.surfaceSoft,
+                              backgroundGradient:
+                                  PremiumDesignTokens.gradNeutralCard,
                               iconTileGradient: PremiumDesignTokens.gradTeal,
                               onTap: () => context.go('/groups'),
                             ),
@@ -307,15 +270,9 @@ class HomeScreen extends ConsumerWidget {
                             child: QuickActionTile(
                               icon: Icons.history_rounded,
                               label: 'View History',
-                              backgroundColor: PremiumDesignTokens.purple100,
-                              backgroundGradient: const LinearGradient(
-                                colors: [
-                                  PremiumDesignTokens.purple100,
-                                  PremiumDesignTokens.purple50,
-                                ],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
+                              backgroundColor: PremiumDesignTokens.surfaceSoft,
+                              backgroundGradient:
+                                  PremiumDesignTokens.gradNeutralCard,
                               iconTileGradient:
                                   PremiumDesignTokens.gradPurple,
                               onTap: () => context.go('/history'),
@@ -354,9 +311,12 @@ class HomeScreen extends ConsumerWidget {
                           Container(
                             width: 32,
                             height: 32,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: PremiumDesignTokens.green100,
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: PremiumDesignTokens.innerBorder,
+                              ),
                             ),
                             child: const Center(
                               child: Icon(
@@ -463,6 +423,28 @@ class HomeScreen extends ConsumerWidget {
                   padding: EdgeInsets.only(bottom: totalBottomPadding),
                 ),
               ],
+            ),
+          ),
+
+          // Bottom Fade above Nav (transparent to #F1E8DA, 40px)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 64.0 + math.max(10.0, bottomInset),
+            height: 40,
+            child: IgnorePointer(
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0x00F1E8DA),
+                      Color(0xFFF1E8DA),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

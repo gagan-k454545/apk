@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 
-/// Reusable pill-shaped accent chip matching the reference design (Strictly Light Theme):
-/// - "🚀 MAKE DECISIONS EASIER"
-/// - "🛡️ Fair & Instant"
-/// - "📦 3D Animation"
+/// Reusable pill-shaped accent chip matching Level 2 Inner Elements:
+/// - Solid #FFFFFF background
+/// - 1px border rgba(27,67,50,0.10)
+/// - Small shadow [0 1px 4px rgba(27,67,50,0.05)]
 class SharedAccentChip extends StatelessWidget {
   const SharedAccentChip({
     super.key,
@@ -37,7 +37,7 @@ class SharedAccentChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? Colors.white.withValues(alpha: 0.85);
+    final bg = backgroundColor ?? Colors.white;
     final fg = textColor ?? PremiumDesignTokens.textPrimary;
     final ic = iconColor ?? fg;
 
@@ -46,11 +46,16 @@ class SharedAccentChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: borderColor != null
-            ? Border.all(color: borderColor!)
-            : Border.all(
-                color: PremiumDesignTokens.borderSoft,
-              ),
+        border: Border.all(
+          color: borderColor ?? PremiumDesignTokens.innerBorder,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D1B4332), // rgba(27,67,50,0.05)
+            blurRadius: 4,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Quick Action Tile matching Section 5.5 of the Master Prompt (Strictly Light Theme):
-/// - Radius 20, height ~72, padding 8, column-centered
-/// - 34x34 icon tile (radius 11) with gradient
-/// - 12px label in --text-strong
-/// - 1px borderGlass, shadowSm, tactile scale down (.96)
+/// Quick Action Tile matching Section 5.5 & Level 1 Surface Hierarchy:
+/// - Surface: linear-gradient(160deg, #FFFFFF 0%, #FBF7F0 100%)
+/// - Border: 1px solid rgba(27,67,50,0.12)
+/// - Shadow: 0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)
+/// - Saturated gradient icon tile + 12px label in --text-strong
 class QuickActionTile extends StatelessWidget {
   const QuickActionTile({
     super.key,
@@ -34,18 +34,17 @@ class QuickActionTile extends StatelessWidget {
         height: 74,
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
-          color: backgroundGradient == null ? backgroundColor : null,
-          gradient: backgroundGradient,
+          gradient: backgroundGradient ?? PremiumDesignTokens.gradNeutralCard,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: PremiumDesignTokens.borderGlass,
+            color: PremiumDesignTokens.cardBorder,
           ),
-          boxShadow: PremiumDesignTokens.shadowSm,
+          boxShadow: PremiumDesignTokens.cardShadow,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 34 x 34 Icon Tile
+            // 34 x 34 Saturated Gradient Icon Tile
             Container(
               width: 34,
               height: 34,
@@ -54,9 +53,9 @@ class QuickActionTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(11),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x18000000),
-                    blurRadius: 4,
-                    offset: Offset(0, 1.5),
+                    color: Color(0x24000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
@@ -70,7 +69,7 @@ class QuickActionTile extends StatelessWidget {
             ),
             const SizedBox(height: 5),
 
-            // 12px Label
+            // 12px Label in --text-strong
             Text(
               label,
               style: const TextStyle(

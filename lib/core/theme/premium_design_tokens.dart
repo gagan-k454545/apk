@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-/// Centralized Design Tokens strictly matching Section 4.2 of the Master Prompt.
-/// Semantic Color Coding:
-/// - Green = Shuffle / primary / names
-/// - Orange-gold = Coin Toss
-/// - Teal = Groups
-/// - Purple = History
+/// Centralized Design Tokens strictly matching Section 4.2 & Master Prompt Contrast Overhaul:
+/// - Level 0: Page Background #F1E8DA (warm sand so cards pop)
+/// - Level 1: Cards start near-white at top: linear-gradient(160deg, #FFFFFF 0%, pastel tint 100%)
+///            Border: 1px solid rgba(27,67,50,0.12)
+///            Shadow: 0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)
+/// - Level 2: Inner elements (solid white chips with border & shadow, solid tinted arrow buttons)
 abstract final class PremiumDesignTokens {
-  // ── Backgrounds ──
-  static const Color bgApp = Color(0xFFFBF6EE); // warm cream page background
-  static const Color bgAppGlow = Color(0xFFFCEBDD); // faint peach glow, bottom/side
+  // ── Backgrounds (Level 0) ──
+  static const Color bgApp = Color(0xFFF1E8DA); // slightly deeper warm sand so cards pop
+  static const Color bgAppGlow = Color(0xFFEADBCA);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceSoft = Color(0xFFFFFCF7); // stats strip, group cards, nav
+  static const Color surfaceSoft = Color(0xFFFBF7F0);
   static const Color background = bgApp;
   static const Color surfaceTinted = Color(0xFFF8F4EC);
   static const Color pedestal = Color(0xFFF4EDE2);
@@ -24,13 +24,19 @@ abstract final class PremiumDesignTokens {
   static const Color green500 = Color(0xFF4F8A6A);
   static const Color green300 = Color(0xFFA9C9B2);
   static const Color green200 = Color(0xFFCFE0CB); // sage chip ("Rahul")
-  static const Color green100 = Color(0xFFE6F0E3); // mint tint
+  static const Color green100 = Color(0xFFE2EEDC); // mint tint
   static const Color green50 = Color(0xFFF0F6EC);
+
+  // ── Card Pastel Tints (Level 1) ──
+  static const Color heroTint = Color(0xFFE3EFDD);
+  static const Color mintCardTint = Color(0xFFE2EEDC);
+  static const Color peachCardTint = Color(0xFFFCE3D0);
+  static const Color neutralCardTint = Color(0xFFFBF7F0);
 
   // ── Peach / Orange (Coin Toss) ──
   static const Color peach50 = Color(0xFFFFF3EA);
-  static const Color peach100 = Color(0xFFFDE6D6);
-  static const Color peach200 = Color(0xFFF9D3BA); // name chips ("Aarav")
+  static const Color peach100 = Color(0xFFFCE3D0);
+  static const Color peach200 = Color(0xFFF9D3BA); // arrow button & name chips
   static const Color orange500 = Color(0xFFF28C28);
   static const Color orange400 = Color(0xFFF6A53F);
   static const Color gold300 = Color(0xFFF2C75C);
@@ -54,12 +60,14 @@ abstract final class PremiumDesignTokens {
   static const Color textMuted = Color(0xFF7A817C); // captions, inactive nav
   static const Color textOnDark = Color(0xFFFFFFFF);
 
-  // ── Lines & Borders ──
-  static const Color borderSoft = Color(0x1414382A); // rgba(20, 56, 42, 0.08)
-  static const Color borderGlass = Color(0xB2FFFFFF); // rgba(255, 255, 255, 0.7)
-  static const Color hairline = Color(0xFFE8E2D5);
+  // ── High Contrast Borders ──
+  static const Color cardBorder = Color(0x1F1B4332); // rgba(27,67,50,0.12) - clear edge against sand
+  static const Color innerBorder = Color(0x1A1B4332); // rgba(27,67,50,0.10)
+  static const Color borderSoft = cardBorder;
+  static const Color borderGlass = Color(0xCCFFFFFF);
+  static const Color hairline = Color(0xFFE0D7C7);
 
-  // ── Backward Compatibility Aliases ──
+  // ── Aliases ──
   static const Color mossDark = green800;
   static const Color mossPrimary = green600;
   static const Color sageMedium = green500;
@@ -89,7 +97,7 @@ abstract final class PremiumDesignTokens {
   static const double radiusMd = rMd;
   static const double radiusLg = rLg;
   static const double radiusXl = rXl;
-  static const double radiusHero = 26.0;
+  static const double radiusHero = 28.0;
   static const double radiusPill = rPill;
 
   // ── Spacing (4px base) ──
@@ -109,36 +117,57 @@ abstract final class PremiumDesignTokens {
   static const double spacingXxl = sp6;
   static const double spacingHero = sp8;
 
-  // ── Shadows ──
-  static const List<BoxShadow> shadowSm = [
+  // ── Level 1 Card Shadows: Two-Layer Distinct Shadow ──
+  static const List<BoxShadow> cardShadow = [
     BoxShadow(
-      color: Color(0x101B4332), // rgba(27, 67, 50, 0.06)
-      blurRadius: 8,
-      offset: Offset(0, 2),
+      color: Color(0x0F1B4332), // 0 1px 2px rgba(27,67,50,0.06)
+      blurRadius: 2,
+      offset: Offset(0, 1),
+    ),
+    BoxShadow(
+      color: Color(0x1F1B4332), // 0 10px 28px rgba(27,67,50,0.12)
+      blurRadius: 28,
+      offset: Offset(0, 10),
     ),
   ];
 
-  static const List<BoxShadow> shadowMd = [
+  static const List<BoxShadow> shadowSm = [
     BoxShadow(
-      color: Color(0x1A1B4332), // rgba(27, 67, 50, 0.10)
-      blurRadius: 24,
-      offset: Offset(0, 8),
+      color: Color(0x0F1B4332),
+      blurRadius: 3,
+      offset: Offset(0, 1),
+    ),
+    BoxShadow(
+      color: Color(0x141B4332),
+      blurRadius: 10,
+      offset: Offset(0, 4),
     ),
   ];
+
+  static const List<BoxShadow> shadowMd = cardShadow;
 
   static const List<BoxShadow> shadowLg = [
     BoxShadow(
-      color: Color(0x281B4332), // rgba(27, 67, 50, 0.16)
-      blurRadius: 40,
-      offset: Offset(0, 18),
+      color: Color(0xCCFFFFFF), // 0 -2px 0 rgba(255,255,255,0.8)
+      offset: Offset(0, -2),
+    ),
+    BoxShadow(
+      color: Color(0x331B4332), // 0 14px 34px rgba(27,67,50,0.20)
+      blurRadius: 34,
+      offset: Offset(0, 14),
     ),
   ];
 
   static const List<BoxShadow> shadowPeach = [
     BoxShadow(
-      color: Color(0x2EF28C28), // rgba(242, 140, 40, 0.18)
+      color: Color(0x0F1B4332),
+      blurRadius: 2,
+      offset: Offset(0, 1),
+    ),
+    BoxShadow(
+      color: Color(0x2EF28C28), // 0 10px 28px peach
       blurRadius: 28,
-      offset: Offset(0, 12),
+      offset: Offset(0, 10),
     ),
   ];
 
@@ -150,7 +179,7 @@ abstract final class PremiumDesignTokens {
     ),
   ];
 
-  static const List<BoxShadow> softCardShadow = shadowSm;
+  static const List<BoxShadow> softCardShadow = cardShadow;
   static const List<BoxShadow> buttonShadow = shadowButton;
 
   static const List<BoxShadow> winnerGlowShadow = [
@@ -167,21 +196,9 @@ abstract final class PremiumDesignTokens {
     ),
   ];
 
-  static const List<BoxShadow> heroGlowShadow = [
-    BoxShadow(
-      color: Color(0x351E3A2B),
-      blurRadius: 28,
-      spreadRadius: 2,
-      offset: Offset(0, 8),
-    ),
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 10,
-      offset: Offset(0, 4),
-    ),
-  ];
+  static const List<BoxShadow> heroGlowShadow = cardShadow;
 
-  // ── Gradients ──
+  // ── Level 1 Card Gradients (near-white at top to pastel tint) ──
   static const LinearGradient gradPrimary = LinearGradient(
     colors: [Color(0xFF2F6B4F), Color(0xFF1B4332)],
     begin: Alignment(-0.6, -0.8),
@@ -190,25 +207,38 @@ abstract final class PremiumDesignTokens {
 
   static const LinearGradient gradHero = LinearGradient(
     colors: [
-      Color(0xFFE4EFE0),
-      Color(0xFFF3F4E6),
-      Color(0xFFFBF1E4),
+      Color(0xFFFFFFFF),
+      Color(0xFFE3EFDD),
     ],
-    stops: [0.0, 0.55, 1.0],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
   );
 
   static const LinearGradient gradMintCard = LinearGradient(
-    colors: [Color(0xFFE6F0E3), Color(0xFFF6F8EE)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFFFFFFF),
+      Color(0xFFE2EEDC),
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
   );
 
   static const LinearGradient gradPeachCard = LinearGradient(
-    colors: [Color(0xFFFDE6D6), Color(0xFFFFF4EA)],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFFFFFFF),
+      Color(0xFFFCE3D0),
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+  );
+
+  static const LinearGradient gradNeutralCard = LinearGradient(
+    colors: [
+      Color(0xFFFFFFFF),
+      Color(0xFFFBF7F0),
+    ],
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
   );
 
   static const LinearGradient gradOrange = LinearGradient(

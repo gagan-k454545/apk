@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Top header row matching Section 5.2 of the Master Prompt (Strictly Light Theme):
+/// Top header row matching Section 5.2 of the Master Prompt:
 /// - Left: 48x48 app logo tile, radius 14, gradPrimary, white Shuffle icon, inner highlight, shadow
 /// - Title: "Shuffle Master" (Shuffle in --text-strong, Master in --green-600)
 /// - Tagline: "Randomize anything. Decide instantly."
@@ -91,18 +91,17 @@ class AppHeader extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [
-                    PremiumDesignTokens.peach50,
-                    Color(0xFFF7ECE0),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white,
                 border: Border.all(
-                  color: PremiumDesignTokens.borderGlass,
+                  color: PremiumDesignTokens.innerBorder,
                 ),
-                boxShadow: PremiumDesignTokens.shadowSm,
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x0D1B4332),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.person_rounded,

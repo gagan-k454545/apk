@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Feature card matching Section 5.4 & Requirement 3:
-/// - Radius 24, padding 14, min-height ~170, 1px borderSoft, shadowMd / shadowPeach
-/// - A) Name Shuffle: gradMintCard, icon 40x40 gradPrimary, arrow button, title, body,
-///      "Fair & Instant" chip, cropped mini chips cluster (Aarav, Neha, Karan) + orange sparks
-/// - B) Coin Toss: gradPeachCard, icon 40x40 gradOrange, arrow button, title, body,
-///      "3D Animation" chip, cropped 3D gold crown coin (plus smaller satellite coins) bleeding off right edge
+/// Feature card matching Section 5.4 & Level 1 Surface Hierarchy:
+/// - Surface: linear-gradient(160deg, #FFFFFF 0%, `<pastel tint>` 100%)
+/// - Border: 1px solid rgba(27,67,50,0.12)
+/// - Shadow: Two-layer shadow [0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)]
+/// - Arrow circle buttons: solid tinted fill (mint #D5E6D0 / peach #F9D3BA) with visible border
+/// - Chips: solid #FFFFFF with 1px border rgba(27,67,50,0.10) and small shadow
 class FeatureCard extends StatefulWidget {
   const FeatureCard({
     super.key,
@@ -75,14 +75,11 @@ class _FeatureCardState extends State<FeatureCard>
             ? PremiumDesignTokens.gradPeachCard
             : PremiumDesignTokens.gradMintCard);
 
-    final shadows = widget.isPeachCard
-        ? PremiumDesignTokens.shadowPeach
-        : PremiumDesignTokens.shadowMd;
-
+    // Solid tinted fill for arrow circle button (Section 3)
     final arrowBg = widget.arrowButtonBg ??
         (widget.isPeachCard
-            ? PremiumDesignTokens.peach100
-            : PremiumDesignTokens.green100);
+            ? const Color(0xFFF9D3BA) // peach #F9D3BA
+            : const Color(0xFFD5E6D0)); // mint #D5E6D0
 
     return PressableScale(
       onTap: widget.onTap,
@@ -93,9 +90,9 @@ class _FeatureCardState extends State<FeatureCard>
           gradient: grad,
           borderRadius: BorderRadius.circular(PremiumDesignTokens.rLg),
           border: Border.all(
-            color: PremiumDesignTokens.borderSoft,
+            color: PremiumDesignTokens.cardBorder,
           ),
-          boxShadow: shadows,
+          boxShadow: PremiumDesignTokens.cardShadow,
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(PremiumDesignTokens.rLg),
@@ -104,7 +101,7 @@ class _FeatureCardState extends State<FeatureCard>
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Top Row: 40x40 Icon Tile + 28px Arrow Button
+                  // Top Row: 40x40 Icon Tile + Solid Tinted 28px Arrow Button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -134,7 +131,7 @@ class _FeatureCardState extends State<FeatureCard>
                         ),
                       ),
 
-                      // 28px Circular Arrow Button
+                      // Solid Tinted Arrow Button (not translucent!)
                       Container(
                         width: 28,
                         height: 28,
@@ -142,8 +139,15 @@ class _FeatureCardState extends State<FeatureCard>
                           color: arrowBg,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: PremiumDesignTokens.borderSoft,
+                            color: PremiumDesignTokens.innerBorder,
                           ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0A000000),
+                              blurRadius: 3,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
                         ),
                         child: const Icon(
                           Icons.arrow_forward_rounded,
@@ -179,20 +183,27 @@ class _FeatureCardState extends State<FeatureCard>
                   ),
                   const Spacer(),
 
-                  // Bottom Pill Chip
+                  // Level 2 Pill Chip: Solid #FFFFFF + 1px border rgba(27,67,50,0.10) + small shadow
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(
                         PremiumDesignTokens.rPill,
                       ),
                       border: Border.all(
-                        color: PremiumDesignTokens.borderSoft,
+                        color: PremiumDesignTokens.innerBorder,
                       ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0D1B4332),
+                          blurRadius: 4,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

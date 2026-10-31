@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 
-/// Single unified Stats Strip matching Section 5.6 of the Master Prompt (Strictly Light Theme):
-/// - Radius 22, bg --surface-soft (#FFFCF7), 1px borderSoft, shadowSm, padding 12x8
+/// Single unified Stats Strip matching Section 5.6 & Level 1 Surface Hierarchy:
+/// - Surface: linear-gradient(160deg, #FFFFFF 0%, #FBF7F0 100%)
+/// - Border: 1px solid rgba(27,67,50,0.12)
+/// - Shadow: Two-layer shadow [0 1px 2px rgba(27,67,50,0.06), 0 10px 28px rgba(27,67,50,0.12)]
 /// - 4 equal columns separated by 1px vertical dividers (height 32)
-/// - Each column: 34px tinted circle + bold 20 count (tabular-nums) + 12px muted label
-/// - 600ms ease-out count-up animation on mount!
+/// - Count-up animation on mount
 class StatsStrip extends StatelessWidget {
   const StatsStrip({
     super.key,
@@ -28,18 +29,18 @@ class StatsStrip extends StatelessWidget {
     final divider = Container(
       width: 1,
       height: 32,
-      color: PremiumDesignTokens.borderSoft,
+      color: PremiumDesignTokens.cardBorder,
     );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: PremiumDesignTokens.surfaceSoft,
+        gradient: PremiumDesignTokens.gradNeutralCard,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: PremiumDesignTokens.borderSoft,
+          color: PremiumDesignTokens.cardBorder,
         ),
-        boxShadow: PremiumDesignTokens.shadowSm,
+        boxShadow: PremiumDesignTokens.cardShadow,
       ),
       child: Row(
         children: [
@@ -109,13 +110,16 @@ class StatsStrip extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // 34px Tinted Circle
+        // 32px Tinted Circle with soft border
         Container(
           width: 32,
           height: 32,
           decoration: BoxDecoration(
             color: circleTint,
             shape: BoxShape.circle,
+            border: Border.all(
+              color: PremiumDesignTokens.innerBorder,
+            ),
           ),
           child: Center(
             child: Icon(
