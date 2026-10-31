@@ -45,7 +45,6 @@ class _PremiumShuffleResultScreenState
 
   Timer? _intermediateTimer;
   final AudioHapticService _audioHapticService = const AudioHapticService();
-  final Random _visualRandom = Random();
 
   // Mocked baseline members for the "Cricket 6" shuffle flow
   static const List<String> _defaultCricketMembers = [
@@ -148,8 +147,7 @@ class _PremiumShuffleResultScreenState
 
       _shuffleStepCount++;
       if (_shuffleStepCount < 8) {
-        final temp = List<String>.from(_visualShuffleList);
-        temp.shuffle(_visualRandom);
+        final temp = fisherYates(_visualShuffleList);
         setState(() {
           _visualShuffleList = temp;
         });

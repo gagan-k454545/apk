@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../shuffle/shuffle_engine.dart';
 
 extension BuildContextExtensions on BuildContext {
   ThemeData get theme => Theme.of(this);
@@ -82,13 +83,11 @@ extension DurationExtensions on Duration {
 
 extension ListExtensions<T> on List<T> {
   List<T> shuffleCustom() {
-    final list = List<T>.from(this);
-    list.shuffle();
-    return list;
+    return fisherYates<T>(this);
   }
 
   T get random {
     if (isEmpty) throw StateError('Cannot get random element from empty list');
-    return this[DateTime.now().microsecondsSinceEpoch % length];
+    return this[randomInt(length)];
   }
 }

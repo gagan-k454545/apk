@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/models.dart';
 import '../core/constants/app_constants.dart';
+import '../core/shuffle/shuffle_engine.dart';
 
 class AppRepository {
   AppRepository._();
@@ -17,6 +18,7 @@ class AppRepository {
     _historyBox = await Hive.openBox(AppConstants.historyBox);
     _coinTossBox = await Hive.openBox(AppConstants.coinTossBox);
     _settingsBox = await Hive.openBox(AppConstants.settingsBox);
+    ShuffleMemory.instance.attachStorageBox(_settingsBox);
     if (_groupsBox.isEmpty) {
       final defaultGroups = [
         Group(

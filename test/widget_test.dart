@@ -143,7 +143,7 @@ void main() {
   group('AppSettings', () {
     test('should have defaults', () {
       final settings = AppSettings.defaults();
-      expect(settings.themeMode, ThemeModeOption.system);
+      expect(settings.themeMode, ThemeModeOption.light);
       expect(settings.totalShuffles, 0);
       expect(settings.totalCoinTosses, 0);
       expect(settings.soundEnabled, true);
