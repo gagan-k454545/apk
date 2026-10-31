@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,12 +58,9 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #E4DACA
-      body: Stack(
-        children: [
-          // Single Scroll Column
-          SafeArea(
-            bottom: false,
-            child: CustomScrollView(
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // 1. Header Row (index 0)
@@ -407,30 +403,6 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-
-          // Small bottom fade strictly behind bottom nav (transparent to #E4DACA, 20px)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 64.0 + math.max(10.0, bottomInset),
-            height: 20,
-            child: IgnorePointer(
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0x00E4DACA),
-                      Color(0xFFE4DACA),
-                    ],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
