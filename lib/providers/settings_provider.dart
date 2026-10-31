@@ -29,9 +29,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     _repository.saveSettings(state);
   }
 
+  void toggleSound() {
+    setSoundEnabled(!state.soundEnabled);
+  }
+
   void setHapticEnabled(bool enabled) {
     state = state.copyWith(hapticEnabled: enabled);
     _repository.saveSettings(state);
+  }
+
+  void toggleHaptic() {
+    setHapticEnabled(!state.hapticEnabled);
   }
 
   void clearAll() {

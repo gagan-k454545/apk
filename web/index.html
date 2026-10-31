@@ -49,6 +49,105 @@
   </style>
 </head>
 <body>
+  <script>
+    // WebAudio Synthesis for 3D Coin Toss
+    window.TossSound = {
+      ctx: null,
+      muted: false,
+      unlock: function() {
+        try {
+          if (!this.ctx) {
+            var AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        } catch(e) {}
+      },
+      env: function(g, t, peak, decay) {
+        try {
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(peak, t + 0.002);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+        } catch(e) {}
+      },
+      whoosh: function(at, dur) {
+        if (!this.ctx || this.muted) return;
+        try {
+          var c = this.ctx;
+          dur = dur || 0.35;
+          var t = c.currentTime + (at || 0);
+          var buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+          var d = buf.getChannelData(0);
+          for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          var src = c.createBufferSource();
+          src.buffer = buf;
+          var bp = c.createBiquadFilter();
+          bp.type = 'bandpass';
+          bp.Q.value = 0.9;
+          bp.frequency.setValueAtTime(500, t);
+          bp.frequency.exponentialRampToValueAtTime(2200, t + dur);
+          var g = c.createGain();
+          this.env(g, t, 0.35, dur);
+          src.connect(bp).connect(g).connect(c.destination);
+          src.start(t);
+        } catch(e) {}
+      },
+      clink: function(at, gain) {
+        if (!this.ctx || this.muted) return;
+        try {
+          var c = this.ctx;
+          gain = gain || 1.0;
+          var t = c.currentTime + (at || 0);
+          var partials = [[2400, 0.5], [3700, 0.3], [5300, 0.18]];
+          var detune = (Math.random() * 40 - 20) / 1000;
+          var self = this;
+          partials.forEach(function(p) {
+            var o = c.createOscillator();
+            var g = c.createGain();
+            o.type = 'sine';
+            o.frequency.value = p[0] * (1 + detune);
+            self.env(g, t, p[1] * gain * 0.5, 0.35);
+            o.connect(g).connect(c.destination);
+            o.start(t);
+            o.stop(t + 0.4);
+          });
+        } catch(e) {}
+      },
+      tick: function(at) {
+        if (!this.ctx || this.muted) return;
+        try {
+          var c = this.ctx;
+          var t = c.currentTime + (at || 0);
+          var o = c.createOscillator();
+          var g = c.createGain();
+          o.type = 'sine';
+          o.frequency.value = 4200;
+          this.env(g, t, 0.08, 0.05);
+          o.connect(g).connect(c.destination);
+          o.start(t);
+          o.stop(t + 0.06);
+        } catch(e) {}
+      },
+      pop: function(at) {
+        if (!this.ctx || this.muted) return;
+        try {
+          var c = this.ctx;
+          var t = c.currentTime + (at || 0);
+          var o = c.createOscillator();
+          var g = c.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(660, t);
+          o.frequency.exponentialRampToValueAtTime(880, t + 0.12);
+          this.env(g, t, 0.25, 0.12);
+          o.connect(g).connect(c.destination);
+          o.start(t);
+          o.stop(t + 0.14);
+        } catch(e) {}
+      }
+    };
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

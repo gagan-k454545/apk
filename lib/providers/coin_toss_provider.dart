@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/shuffle/shuffle_engine.dart';
+import '../core/shuffle/coin_toss_engine.dart';
 import '../models/models.dart';
 import '../database/app_repository.dart';
 import 'repository_provider.dart';
@@ -31,17 +31,23 @@ class CoinTossNotifier extends StateNotifier<List<CoinTossEntry>> {
     }).toList();
   }
 
-  /// Performs a true 50/50 random toss, persists it, and updates total toss counter.
-  Future<CoinTossEntry> tossCoin() async {
-    // Requirement 4: True Random Coin Result
-    // Every toss: Heads = 50%, Tails = 50% via CSPRNG rejection sampling
-    final bool isHeads = randomInt(2) == 0;
-    final entry = CoinTossEntry(isHeads: isHeads);
+  /// Appends a decided toss entry after the landing animation finishes.
+  /// Prevents duplicates if already recorded.
+  Future<void> saveTossResult(CoinTossEntry entry) async {
+    if (state.any((e) => e.id == entry.id)) return;
 
     await _repository.saveCoinTossEntry(entry);
     _ref.read(settingsProvider.notifier).incrementCoinTosses();
 
     state = [entry, ...state];
+  }
+
+  /// Performs a true 50/50 random toss, persists it, and updates total toss counter.
+  Future<CoinTossEntry> tossCoin() async {
+    final bool isHeads = CoinTossEngine.tossCoin() == CoinFace.heads;
+    final entry = CoinTossEntry(isHeads: isHeads);
+
+    await saveTossResult(entry);
     return entry;
   }
 
