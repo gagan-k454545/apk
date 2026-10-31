@@ -7,9 +7,10 @@ import '../../core/theme/premium_design_tokens.dart';
 import '../../core/widgets/premium/pressable_scale.dart';
 import '../../providers/providers.dart';
 import 'widgets/app_header.dart';
-import 'widgets/feature_card.dart';
+import 'widgets/coin_toss_feature_card.dart';
 import 'widgets/group_card.dart';
 import 'widgets/hero_decision_card.dart';
+import 'widgets/name_shuffle_feature_card.dart';
 import 'widgets/quick_action_tile.dart';
 import 'widgets/stat_tile.dart';
 
@@ -97,22 +98,9 @@ class HomeScreen extends ConsumerWidget {
                     child: wrapStagger(
                       Row(
                         children: [
-                          // Card A: Name Shuffle
+                          // Card A: Name Shuffle (High-Fidelity 3D Feature Card)
                           Expanded(
-                            child: FeatureCard(
-                              title: 'Name Shuffle',
-                              description:
-                                  'Randomize a list of names using pure Fisher-Yates algorithm.',
-                              icon: Icons.shuffle_rounded,
-                              badgeText: 'Fair & Instant',
-                              badgeIcon: Icons.verified_user_rounded,
-                              backgroundColor: PremiumDesignTokens.green100,
-                              backgroundGradient:
-                                  PremiumDesignTokens.gradMintCard,
-                              iconBoxColor: PremiumDesignTokens.green800,
-                              iconBoxGradient:
-                                  PremiumDesignTokens.gradPrimary,
-                              floatingPills: const ['Aarav', 'Neha', 'Karan'],
+                            child: NameShuffleFeatureCard(
                               onTap: () {
                                 if (groups.isNotEmpty) {
                                   context.push('/shuffle/${groups.first.id}');
@@ -124,23 +112,9 @@ class HomeScreen extends ConsumerWidget {
                           ),
                           const SizedBox(width: 12),
 
-                          // Card B: Coin Toss
+                          // Card B: Coin Toss (High-Fidelity 3D Feature Card matching Name Shuffle)
                           Expanded(
-                            child: FeatureCard(
-                              title: 'Coin Toss',
-                              description:
-                                  'Make a quick 50/50 heads-or-tails decision with 3D animation.',
-                              icon: Icons.monetization_on_rounded,
-                              badgeText: '3D Animation',
-                              badgeIcon: Icons.view_in_ar_rounded,
-                              backgroundColor: PremiumDesignTokens.peach100,
-                              backgroundGradient:
-                                  PremiumDesignTokens.gradPeachCard,
-                              iconBoxColor: PremiumDesignTokens.orange500,
-                              iconBoxGradient:
-                                  PremiumDesignTokens.gradOrange,
-                              isPeachCard: true,
-                              hasCoinGraphic: true,
+                            child: CoinTossFeatureCard(
                               onTap: () => context.go('/coin_toss'),
                             ),
                           ),

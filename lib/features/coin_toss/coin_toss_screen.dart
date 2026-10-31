@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/services/audio_haptic_service.dart';
@@ -11,13 +10,14 @@ import '../../models/models.dart';
 import '../../providers/providers.dart';
 import 'widgets/coin_3d_widget.dart';
 
-/// Redesigned Coin Toss Screen matching Sections 1, 2, 3, 4, 5, 6:
-/// - Unbiased CSPRNG randomness core (crypto.getRandomValues / Random.secure)
-/// - Pure 50/50 independent outcomes decided first
-/// - Header (22/800) with sound & haptic 44px toggles
-/// - Level 1 Peach Card Stage with FAIR 50/50 pill, 3D Gold Crown coin, result block
+/// Redesigned Coin Toss Screen:
+/// - True end-to-end CSPRNG randomness with anti-streak protection
+/// - Three fair random outcomes: HEADS, TAILS, and NO RESULT (lands on edge in the middle)
+/// - Mid-air "TOSSING..." state so no result is shown in the middle of a flip
+/// - Header with sound & haptic 44px toggles
+/// - Level 1 Stage Card with 3D Gold Crown coin, result block
 /// - Primary toss button with tactile scale
-/// - Statistics card: 3 equal tiles + animated split bar + small sample note
+/// - Statistics card: 3 equal tiles (Heads, Tails, No Result) + 3-way split bar + sample note
 /// - Recent Tosses: latest 10, slide-in animation, clear all & individual delete
 /// - Bottom nav clearance (106 + bottomInset)
 class CoinTossScreen extends ConsumerStatefulWidget {
@@ -81,10 +81,23 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
       final history = ref.read(coinTossProvider);
       if (history.isNotEmpty && mounted) {
         final last = history.first;
+        CoinFace lastFace;
+        switch (last.outcome) {
+          case CoinSide.heads:
+            lastFace = CoinFace.heads;
+            break;
+          case CoinSide.tails:
+            lastFace = CoinFace.tails;
+            break;
+          case CoinSide.noResult:
+            lastFace = CoinFace.noResult;
+            break;
+        }
+
         setState(() {
           _lastResult = last;
           _hasResult = true;
-          _currentFace = last.isHeads ? CoinFace.heads : CoinFace.tails;
+          _currentFace = lastFace;
           _currentPlan = TossPlan(
             result: _currentFace,
             startFace: _currentFace,
@@ -94,6 +107,9 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
             driftZ: 0,
             height: 180,
             bounces: 3,
+            targetRestingAngle: _currentFace == CoinFace.heads
+                ? 0.0
+                : (_currentFace == CoinFace.tails ? 180.0 : 90.0),
           );
         });
       }
@@ -128,7 +144,6 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
 
     final entryToSave = _pendingEntry;
     if (entryToSave != null) {
-      // Requirement 6: After landing completes, append the toss, update stats, animate UI
       await ref.read(coinTossProvider.notifier).saveTossResult(entryToSave);
     }
 
@@ -148,7 +163,6 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
 
   @override
   void dispose() {
-    // If the user leaves mid-toss, record the already-decided result once with no duplicates (Section 6)
     if (_isTossing && _pendingEntry != null) {
       ref.read(coinTossProvider.notifier).saveTossResult(_pendingEntry!);
     }
@@ -159,12 +173,27 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
   void _startToss() {
     if (_isTossing) return;
 
-    // Unlock WebAudio on gesture
     _audioHapticService.unlock();
 
-    // 1. Decide outcome FIRST via CSPRNG (Section 1)
+    // 1. Decide outcome via unbiased CSPRNG with anti-streak protection
     final plan = CoinTossEngine.planToss(_currentFace);
-    final entry = CoinTossEntry(isHeads: plan.isHeads);
+    CoinSide side;
+    switch (plan.result) {
+      case CoinFace.heads:
+        side = CoinSide.heads;
+        break;
+      case CoinFace.tails:
+        side = CoinSide.tails;
+        break;
+      case CoinFace.noResult:
+        side = CoinSide.noResult;
+        break;
+    }
+
+    final entry = CoinTossEntry(
+      isHeads: side == CoinSide.heads,
+      outcome: side,
+    );
 
     _didLaunch = false;
     _didApexTick = false;
@@ -195,17 +224,19 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
     final totalTosses = notifier.totalTosses;
     final headsCount = notifier.headsCount;
     final tailsCount = notifier.tailsCount;
+    final noResultCount = notifier.noResultCount;
     final headsPct = notifier.headsPercentage;
     final tailsPct = notifier.tailsPercentage;
+    final noResultPct = notifier.noResultPercentage;
 
     return Scaffold(
-      backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #E4DACA
+      backgroundColor: PremiumDesignTokens.bgApp,
       body: SafeArea(
         bottom: false,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // 1. Header Row (22/800 + Sound/Haptic toggles with 44px hit areas)
+            // 1. Header Row
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
@@ -226,7 +257,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                           ),
                           SizedBox(height: 2),
                           Text(
-                            'Fair 50/50 · Secure random',
+                            'True Random · Anti-Streak · 3-Way Fair',
                             style: TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w600,
@@ -237,7 +268,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                       ),
                     ),
 
-                    // Sound Toggle (44px hit area)
+                    // Sound Toggle
                     PressableScale(
                       onTap: () =>
                           ref.read(settingsProvider.notifier).toggleSound(),
@@ -271,7 +302,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                     ),
                     const SizedBox(width: 8),
 
-                    // Haptics Toggle (44px hit area)
+                    // Haptics Toggle
                     PressableScale(
                       onTap: () =>
                           ref.read(settingsProvider.notifier).toggleHaptic(),
@@ -308,7 +339,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
               ),
             ),
 
-            // 2. Main Stage Card (White to peach gradient, 1.5px border, two-layer shadow)
+            // 2. Main Stage Card
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -325,7 +356,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
                   child: Column(
                     children: [
-                      // Top Pill: "FAIR 50/50 DECISION"
+                      // Top Pill: "FAIR RANDOM DECISION"
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -357,7 +388,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                             ),
                             SizedBox(width: 6),
                             Text(
-                              'FAIR 50/50 DECISION',
+                              'END-TO-END FAIR RANDOM',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w800,
@@ -380,14 +411,14 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                       ),
                       const SizedBox(height: 10),
 
-                      // Result Block below Coin
+                      // Result Block below Coin (Shows mid-air Tossing in the middle or settled result)
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 260),
                         child: _buildResultBlock(),
                       ),
                       const SizedBox(height: 18),
 
-                      // Primary Button: "TOSS COIN" / "TOSS AGAIN" (Height 52, --grad-primary)
+                      // Primary Button: "TOSS COIN" / "TOSS AGAIN"
                       PressableScale(
                         onTap: _isTossing ? null : _startToss,
                         child: Container(
@@ -416,9 +447,9 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                                       ),
                                       SizedBox(width: 10),
                                       Text(
-                                        'FLIPPING...',
+                                        'FLIPPING IN MID-AIR...',
                                         style: TextStyle(
-                                          fontSize: 15,
+                                          fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
                                           letterSpacing: 0.8,
                                           color: Colors.white,
@@ -459,7 +490,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
               ),
             ),
 
-            // 3. Statistics Section (3 equal tiles + animated split bar + small samples note)
+            // 3. Statistics Section (3 equal tiles for Heads, Tails, No Result + 3-way split bar)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
@@ -477,31 +508,46 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
-                      const Text(
-                        'Statistics',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: PremiumDesignTokens.textStrong,
-                        ),
+                      // Header with Total counter
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Statistics',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: PremiumDesignTokens.textStrong,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF4EDE2),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: PremiumDesignTokens.innerBorder,
+                              ),
+                            ),
+                            child: Text(
+                              'Total: $totalTosses',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: PremiumDesignTokens.forestDark,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
-                      // Three equal tiles: Total, Heads, Tails
+                      // Three equal outcome tiles: Heads, Tails, No Result
                       Row(
                         children: [
-                          Expanded(
-                            child: _StatTile(
-                              label: 'Total',
-                              value: totalTosses,
-                              percentText: '',
-                              icon: Icons.bar_chart_rounded,
-                              iconColor: PremiumDesignTokens.green700,
-                              iconBg: PremiumDesignTokens.green100,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
                           Expanded(
                             child: _StatTile(
                               label: 'Heads',
@@ -527,11 +573,24 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                               iconBg: PremiumDesignTokens.teal50,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _StatTile(
+                              label: 'No Result',
+                              value: noResultCount,
+                              percentText: totalTosses > 0
+                                  ? '(${noResultPct.toStringAsFixed(0)}%)'
+                                  : '(0%)',
+                              icon: Icons.view_headline_rounded,
+                              iconColor: const Color(0xFFD97706),
+                              iconBg: const Color(0xFFFEF3C7),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 14),
 
-                      // Slim Animated Split Bar (Heads in Gold, Tails in Teal)
+                      // 3-Segment Animated Split Bar (Heads in Gold, Tails in Teal, No Result in Amber)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
                         child: Container(
@@ -540,67 +599,50 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                           color: const Color(0xFFF0EAE1),
                           child: totalTosses == 0
                               ? const SizedBox.shrink()
-                              : LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    final headsFactor =
-                                        (headsCount / totalTosses).clamp(0.0, 1.0);
-                                    return TweenAnimationBuilder<double>(
-                                      tween: Tween<double>(
-                                        begin: 0.5,
-                                        end: headsFactor,
+                              : Row(
+                                  children: [
+                                    if (headsCount > 0)
+                                      Expanded(
+                                        flex: headsCount,
+                                        child: Container(
+                                          color: PremiumDesignTokens.gold500,
+                                        ),
                                       ),
-                                      duration:
-                                          const Duration(milliseconds: 400),
-                                      curve: Curves.easeOut,
-                                      builder: (context, animatedVal, _) {
-                                        return Row(
-                                          children: [
-                                            Expanded(
-                                              flex: (animatedVal * 1000)
-                                                  .round()
-                                                  .clamp(1, 999),
-                                              child: Container(
-                                                color:
-                                                    PremiumDesignTokens.gold500,
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: ((1.0 - animatedVal) * 1000)
-                                                  .round()
-                                                  .clamp(1, 999),
-                                              child: Container(
-                                                color:
-                                                    PremiumDesignTokens.teal600,
-                                              ),
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
+                                    if (tailsCount > 0)
+                                      Expanded(
+                                        flex: tailsCount,
+                                        child: Container(
+                                          color: PremiumDesignTokens.teal600,
+                                        ),
+                                      ),
+                                    if (noResultCount > 0)
+                                      Expanded(
+                                        flex: noResultCount,
+                                        child: Container(
+                                          color: const Color(0xFFD97706),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                         ),
                       ),
 
-                      // Small Sample Note
-                      if (totalTosses < 30) ...[
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Small samples vary a lot. Results are always 50/50.',
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w500,
-                            color: PremiumDesignTokens.textMuted,
-                          ),
+                      const SizedBox(height: 10),
+                      const Text(
+                        'Balanced 3-way random: Heads, Tails, and No Result (edge). Anti-streak protection active.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: PremiumDesignTokens.textMuted,
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
 
-            // 4. Recent Tosses Section (Latest 10, slide-in, Clear All, delete item)
+            // 4. Recent Tosses Section
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 16, 10),
@@ -649,15 +691,15 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.monetization_on_outlined,
-                          size: 36,
+                          Icons.history_toggle_off_rounded,
+                          size: 38,
                           color: PremiumDesignTokens.textMuted,
                         ),
                         SizedBox(height: 8),
                         Text(
-                          'No tosses yet',
+                          'No recent tosses yet',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w600,
                             color: PremiumDesignTokens.textMuted,
                           ),
@@ -667,56 +709,31 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   ),
                 ),
               )
-            else ...[
+            else
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList.builder(
-                  itemCount: history.take(10).length,
-                  itemBuilder: (context, index) {
-                    final entry = history[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _RecentTossRow(
-                        key: ValueKey(entry.id),
-                        entry: entry,
-                        onDelete: () => notifier.deleteEntry(entry.id),
-                      ),
-                    );
-                  },
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final entry = history[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: _RecentTossRow(
+                          key: ValueKey(entry.id),
+                          entry: entry,
+                          onDelete: () =>
+                              ref.read(coinTossProvider.notifier).deleteEntry(entry.id),
+                        ),
+                      );
+                    },
+                    childCount: history.length > 10 ? 10 : history.length,
+                  ),
                 ),
               ),
 
-              // "View all" link to History
-              if (history.length > 10)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Center(
-                      child: GestureDetector(
-                        onTap: () => context.go('/history'),
-                        behavior: HitTestBehavior.opaque,
-                        child: const SizedBox(
-                          height: 44,
-                          child: Center(
-                            child: Text(
-                              'View all in History →',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                color: PremiumDesignTokens.forestDark,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-
-            // Safe bottom padding for floating bottom nav pill
-            SliverPadding(
-              padding: EdgeInsets.only(bottom: totalBottomPadding),
+            // Bottom Nav Clearance
+            SliverToBoxAdapter(
+              child: SizedBox(height: totalBottomPadding),
             ),
           ],
         ),
@@ -724,26 +741,55 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
     );
   }
 
+  /// Result block below coin displaying live state or final outcome
   Widget _buildResultBlock() {
     if (_isTossing) {
-      return const Column(
-        key: ValueKey('tossing'),
+      return Column(
+        key: const ValueKey('tossing'),
         children: [
-          Text(
-            'Flipping in 3D...',
+          const Text(
+            'TOSSING...',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: PremiumDesignTokens.textBody,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
+              color: PremiumDesignTokens.textStrong,
             ),
           ),
-          SizedBox(height: 4),
-          Text(
-            'Unbiased CSPRNG rejection sampling',
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: PremiumDesignTokens.textMuted,
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: PremiumDesignTokens.innerBorder,
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      PremiumDesignTokens.gold500,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Deciding in mid-air...',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                    color: PremiumDesignTokens.textBody,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -762,33 +808,43 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
       );
     }
 
-    final isHeads = _lastResult!.isHeads;
+    final outcome = _lastResult!.outcome;
+    final isHeads = outcome == CoinSide.heads;
+    final isNoResult = outcome == CoinSide.noResult;
+
+    final resultTitle = isNoResult ? 'NO RESULT' : (isHeads ? 'HEADS' : 'TAILS');
+    final resultColor = isNoResult
+        ? const Color(0xFFD97706)
+        : (isHeads
+            ? const Color(0xFFBF7A08)
+            : PremiumDesignTokens.green700);
+
+    final subtext = isNoResult
+        ? 'Coin landed on edge in the middle · Toss again!'
+        : 'Decided by secure random';
 
     return Column(
       key: ValueKey('result_${_lastResult!.id}'),
       children: [
-        // Result Word in 34/800
         Text(
-          isHeads ? 'HEADS' : 'TAILS',
+          resultTitle,
           style: TextStyle(
-            fontSize: 34,
+            fontSize: isNoResult ? 30 : 34,
             fontWeight: FontWeight.w900,
             letterSpacing: 2.0,
-            color: isHeads
-                ? const Color(0xFFBF7A08) // Antique gold
-                : PremiumDesignTokens.green700,
+            color: resultColor,
           ),
         ),
         const SizedBox(height: 6),
-
-        // Result Chip
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: PremiumDesignTokens.innerBorder,
+              color: isNoResult
+                  ? const Color(0xFFFDE68A)
+                  : PremiumDesignTokens.innerBorder,
             ),
             boxShadow: const [
               BoxShadow(
@@ -798,13 +854,30 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
               ),
             ],
           ),
-          child: const Text(
-            'Decided by secure random',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: PremiumDesignTokens.forestDark,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isNoResult
+                    ? Icons.view_headline_rounded
+                    : (isHeads
+                        ? Icons.workspace_premium_rounded
+                        : Icons.stars_rounded),
+                size: 13,
+                color: resultColor,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                subtext,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isNoResult
+                      ? const Color(0xFF92400E)
+                      : PremiumDesignTokens.forestDark,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -851,7 +924,9 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        side: const BorderSide(color: PremiumDesignTokens.cardBorder),
+                        side: const BorderSide(
+                          color: PremiumDesignTokens.cardBorder,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       onPressed: () => Navigator.pop(modalCtx),
@@ -981,7 +1056,7 @@ class _StatTile extends StatelessWidget {
   }
 }
 
-/// Recent Toss List Item (Section 2)
+/// Recent Toss List Item
 class _RecentTossRow extends StatelessWidget {
   const _RecentTossRow({
     super.key,
@@ -994,8 +1069,41 @@ class _RecentTossRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isHeads = entry.isHeads;
+    final outcome = entry.outcome;
+    final isHeads = outcome == CoinSide.heads;
+    final isNoResult = outcome == CoinSide.noResult;
+
     final timeStr = DateFormat('h:mm a').format(entry.tossedAt);
+
+    Color bgStart;
+    Color bgEnd;
+    Color borderColor;
+    Color iconColor;
+    IconData iconData;
+    String labelText;
+
+    if (isNoResult) {
+      bgStart = const Color(0xFFFEF3C7);
+      bgEnd = const Color(0xFFFDE68A);
+      borderColor = const Color(0xFFF59E0B);
+      iconColor = const Color(0xFFB45309);
+      iconData = Icons.view_headline_rounded;
+      labelText = 'NO RESULT';
+    } else if (isHeads) {
+      bgStart = const Color(0xFFFCE29A);
+      bgEnd = const Color(0xFFE9B44C);
+      borderColor = const Color(0xFFD99A22);
+      iconColor = const Color(0xFF6B4302);
+      iconData = Icons.workspace_premium_rounded;
+      labelText = 'HEADS';
+    } else {
+      bgStart = const Color(0xFFE2EEDC);
+      bgEnd = const Color(0xFFCFE0CB);
+      borderColor = PremiumDesignTokens.green300;
+      iconColor = PremiumDesignTokens.green800;
+      iconData = Icons.stars_rounded;
+      labelText = 'TAILS';
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -1016,33 +1124,16 @@ class _RecentTossRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Row(
         children: [
-          // Left Face Icon Circle (Gold circle with crown for HEADS, ringed star for TAILS)
+          // Left Face Icon Circle
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: isHeads
-                    ? const [Color(0xFFFCE29A), Color(0xFFE9B44C)]
-                    : const [Color(0xFFE2EEDC), Color(0xFFCFE0CB)],
-              ),
-              border: Border.all(
-                color: isHeads
-                    ? const Color(0xFFD99A22)
-                    : PremiumDesignTokens.green300,
-                width: 1.2,
-              ),
+              gradient: LinearGradient(colors: [bgStart, bgEnd]),
+              border: Border.all(color: borderColor, width: 1.2),
             ),
-            child: Icon(
-              isHeads
-                  ? Icons.workspace_premium_rounded
-                  : Icons.stars_rounded,
-              size: 20,
-              color: isHeads
-                  ? const Color(0xFF6B4302)
-                  : PremiumDesignTokens.green800,
-            ),
+            child: Icon(iconData, size: 20, color: iconColor),
           ),
           const SizedBox(width: 12),
 
@@ -1052,7 +1143,7 @@ class _RecentTossRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isHeads ? 'HEADS' : 'TAILS',
+                  labelText,
                   style: const TextStyle(
                     fontSize: 14.5,
                     fontWeight: FontWeight.w800,
@@ -1072,7 +1163,7 @@ class _RecentTossRow extends StatelessWidget {
             ),
           ),
 
-          // 44px Delete Hit Area (X button)
+          // Delete Hit Area (X button)
           GestureDetector(
             onTap: onDelete,
             behavior: HitTestBehavior.opaque,

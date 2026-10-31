@@ -2,15 +2,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/shuffle/coin_toss_engine.dart';
 
-/// Premium 3D Gold Coin Toss Widget matching Section 3 & 4:
+/// Premium 3D Gold Coin Toss Widget:
 /// - 150px size
 /// - Rich radial gold gradient: #FCE29A, #E9B44C 55%, #C98A14
 /// - Milled rim ticks & inner raised ring
-/// - Crown emblem on Heads, Ringed Star on Tails + small caps label
+/// - Crown emblem on Heads, Ringed Star on Tails, Standing Rim on No Result
 /// - 3D disc stacked edge depth (translateZ -6px..+6px)
 /// - Moving metallic specular shine sweep
 /// - Full physics-feel animation (anticipation dip, launch, apex scale 1.25,
-///   fall, land squash, damped bounces, settling on exact parity)
+///   fall, land squash, damped bounces, settling on exact parity: 0° Heads, 180° Tails, 90° No Result)
 /// - Synchronized dynamic shadow & landing sparks flourish
 class Coin3DWidget extends StatelessWidget {
   const Coin3DWidget({
@@ -42,7 +42,7 @@ class Coin3DWidget extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // 1. Soft Elliptical Ground Shadow under the coin
+            // 1. Soft Ground Shadow under the coin
             AnimatedBuilder(
               animation: animationController,
               builder: (context, child) {
@@ -52,45 +52,48 @@ class Coin3DWidget extends StatelessWidget {
                 double shadowOpacity = 0.35;
                 double shadowBlur = 16.0;
 
+                final isEdgeLanded = hasResult && plan.isNoResult;
+
                 if (isTossing && !reduceMotion) {
                   if (v <= 0.05) {
-                    // Anticipation
                     final p = v / 0.05;
                     shadowScale = 1.0 + (p * 0.1);
                     shadowOpacity = 0.35 + (p * 0.1);
                     shadowBlur = 16.0 - (p * 4.0);
                   } else if (v <= 0.45) {
-                    // Launch to apex
                     final p = (v - 0.05) / 0.40;
                     final curveP = const Cubic(0.2, 0.7, 0.3, 1.0).transform(p);
-                    shadowScale = 1.1 - (curveP * 0.55); // down to 0.55
-                    shadowOpacity = 0.45 - (curveP * 0.27); // down to 0.18
-                    shadowBlur = 12.0 + (curveP * 26.0); // up to 38.0
+                    shadowScale = 1.1 - (curveP * 0.55);
+                    shadowOpacity = 0.45 - (curveP * 0.27);
+                    shadowBlur = 12.0 + (curveP * 26.0);
                   } else if (v <= 0.78) {
-                    // Fall to ground
                     final p = (v - 0.45) / 0.33;
                     final curveP = const Cubic(0.5, 0.0, 0.9, 0.5).transform(p);
                     shadowScale = 0.55 + (curveP * 0.45);
                     shadowOpacity = 0.18 + (curveP * 0.17);
                     shadowBlur = 38.0 - (curveP * 22.0);
                   } else {
-                    // Land & bounces
                     shadowScale = 1.0;
                     shadowOpacity = 0.35;
                     shadowBlur = 16.0;
                   }
                 }
 
+                // If standing on edge (No Result), shadow is narrow directly under the rim
+                final baseWidth = isEdgeLanded ? 48.0 : 135.0;
+                final baseHeight = isEdgeLanded ? 14.0 : 20.0;
+
                 return Positioned(
                   bottom: 22,
                   child: Container(
-                    width: 135 * shadowScale,
-                    height: 20 * shadowScale,
+                    width: baseWidth * shadowScale,
+                    height: baseHeight * shadowScale,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2A1F08).withValues(alpha: shadowOpacity),
+                          color: const Color(0xFF2A1F08)
+                              .withValues(alpha: shadowOpacity),
                           blurRadius: shadowBlur,
                           spreadRadius: 2,
                         ),
@@ -101,7 +104,7 @@ class Coin3DWidget extends StatelessWidget {
               },
             ),
 
-            // 2. Landing Flourish Sparks (6 to 8 tiny gold/orange spark dashes burst on landing)
+            // 2. Landing Flourish Sparks
             if (hasResult)
               AnimatedBuilder(
                 animation: animationController,
@@ -123,14 +126,13 @@ class Coin3DWidget extends StatelessWidget {
                 final double v = animationController.value;
 
                 if (reduceMotion) {
-                  // Reduced motion fallback: 250ms crossfade flip
+                  // Reduced motion fallback: crossfade flip
                   final currentFace = isTossing
                       ? (v > 0.5 ? plan.result : plan.startFace)
                       : (hasResult ? plan.result : plan.startFace);
-                  final isHeads = currentFace == CoinFace.heads;
 
                   return _GoldCoinFace(
-                    isHeads: isHeads,
+                    face: currentFace,
                     size: coinSize,
                     shineOffset: 0.0,
                   );
@@ -144,37 +146,38 @@ class Coin3DWidget extends StatelessWidget {
                 double rotZDeg = 0.0;
 
                 if (!isTossing && !hasResult) {
-                  // Idle resting state
                   rotXDeg = plan.startAngleDeg;
                 } else if (!isTossing && hasResult) {
-                  // Settled result state
                   rotXDeg = plan.endAngleDeg;
                 } else {
                   // Active Toss Physics Timeline
-                  final totalTurnsDeg = plan.halfTurns * 180.0;
+                  final totalTurnsDeg = plan.totalTurnsDeg > 0
+                      ? plan.totalTurnsDeg
+                      : (plan.halfTurns * 180.0);
 
                   if (v <= 0.05) {
-                    // 0.00 to 0.05: Anticipation dip
                     final p = v / 0.05;
                     translateY = p * 6.0;
-                    scaleY = 1.0 - (p * 0.04); // .96
+                    scaleY = 1.0 - (p * 0.04);
                     scaleX = 1.0 + (p * 0.02);
                     rotXDeg = plan.startAngleDeg;
                   } else if (v <= 0.45) {
-                    // 0.05 to 0.45: Launch to apex
                     final p = (v - 0.05) / 0.40;
-                    final curveP = const Cubic(0.2, 0.7, 0.3, 1.0).transform(p);
+                    final curveP =
+                        const Cubic(0.2, 0.7, 0.3, 1.0).transform(p);
                     translateY = 6.0 - (curveP * (plan.height + 6.0));
-                    rotXDeg = plan.startAngleDeg + (curveP * totalTurnsDeg * 0.55);
+                    rotXDeg =
+                        plan.startAngleDeg + (curveP * totalTurnsDeg * 0.55);
                     rotYDeg = plan.tiltY * math.sin(p * math.pi);
                     rotZDeg = plan.driftZ * math.sin(p * math.pi);
-                    final scaleElev = 1.0 + (math.sin(p * math.pi * 0.5) * 0.25);
+                    final scaleElev =
+                        1.0 + (math.sin(p * math.pi * 0.5) * 0.25);
                     scaleX = scaleElev;
                     scaleY = scaleElev;
                   } else if (v <= 0.78) {
-                    // 0.45 to 0.78: Fall to ground
                     final p = (v - 0.45) / 0.33;
-                    final curveP = const Cubic(0.5, 0.0, 0.9, 0.5).transform(p);
+                    final curveP =
+                        const Cubic(0.5, 0.0, 0.9, 0.5).transform(p);
                     translateY = -plan.height + (curveP * plan.height);
                     rotXDeg = plan.startAngleDeg +
                         (totalTurnsDeg * 0.55) +
@@ -185,14 +188,12 @@ class Coin3DWidget extends StatelessWidget {
                     scaleX = scaleElev;
                     scaleY = scaleElev;
                   } else if (v <= 0.82) {
-                    // 0.78 to 0.82: Land squash
                     final p = (v - 0.78) / 0.04;
                     translateY = 0.0;
                     rotXDeg = plan.endAngleDeg;
-                    scaleY = 1.0 - (math.sin(p * math.pi) * 0.06); // .94
-                    scaleX = 1.0 + (math.sin(p * math.pi) * 0.04); // 1.04
+                    scaleY = 1.0 - (math.sin(p * math.pi) * 0.06);
+                    scaleX = 1.0 + (math.sin(p * math.pi) * 0.04);
                   } else {
-                    // 0.82 to 1.00: Damped bounces (heights ~26px, 11px, 4px)
                     final p = (v - 0.82) / 0.18;
                     double bounceHeight = 0.0;
                     double wobbleDeg = 0.0;
@@ -234,7 +235,7 @@ class Coin3DWidget extends StatelessWidget {
                 final radY = rotYDeg * (math.pi / 180.0);
                 final radZ = rotZDeg * (math.pi / 180.0);
 
-                // Parity face check: cos(radX) >= 0 is Heads, < 0 is Tails
+                // Parity face check:
                 final cosVal = math.cos(radX);
                 final isHeadsFacing = cosVal >= 0;
                 final shineShift = math.sin(radX);
@@ -247,25 +248,30 @@ class Coin3DWidget extends StatelessWidget {
                     child: Transform(
                       alignment: Alignment.center,
                       transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.0011) // 3D Perspective (900px equivalent)
+                        ..setEntry(3, 2, 0.0011) // 3D Perspective
                         ..rotateY(radY)
                         ..rotateZ(radZ)
                         ..rotateX(radX),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // 3D Rim Depth Disc Layers (-6px to +6px)
-                          ...List.generate(7, (idx) {
-                            final z = (idx - 3) * 1.8;
+                          // 3D Rim Depth Disc Layers (-7px to +7px)
+                          ...List.generate(9, (idx) {
+                            final z = (idx - 4) * 1.8;
                             return Transform(
                               alignment: Alignment.center,
-                              transform: Matrix4.identity()..setTranslationRaw(0.0, 0.0, z),
+                              transform: Matrix4.identity()
+                                ..setTranslationRaw(0.0, 0.0, z),
                               child: Container(
                                 width: coinSize,
                                 height: coinSize,
-                                decoration: const BoxDecoration(
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Color(0xFFC78B18), // Darker edge gold
+                                  color: const Color(0xFFC78B18),
+                                  border: Border.all(
+                                    color: const Color(0xFFE9B44C),
+                                    width: 1.2,
+                                  ),
                                 ),
                               ),
                             );
@@ -274,7 +280,7 @@ class Coin3DWidget extends StatelessWidget {
                           // Active Facing Side (Heads or Tails)
                           isHeadsFacing
                               ? _GoldCoinFace(
-                                  isHeads: true,
+                                  face: CoinFace.heads,
                                   size: coinSize,
                                   shineOffset: shineShift,
                                 )
@@ -282,7 +288,7 @@ class Coin3DWidget extends StatelessWidget {
                                   alignment: Alignment.center,
                                   transform: Matrix4.rotationX(math.pi),
                                   child: _GoldCoinFace(
-                                    isHeads: false,
+                                    face: CoinFace.tails,
                                     size: coinSize,
                                     shineOffset: shineShift,
                                   ),
@@ -301,25 +307,27 @@ class Coin3DWidget extends StatelessWidget {
   }
 }
 
-/// Gold Coin Face matching Section 3:
+/// Gold Coin Face:
 /// - Radial gradient #FCE29A, #E9B44C 55%, #C98A14
 /// - Custom milled rim ticks
 /// - Inner raised golden bezel
-/// - Embossed Crown (Heads) / Ringed Star (Tails)
-/// - Moving specular highlight overlay
+/// - Embossed Crown (Heads) / Ringed Star (Tails) / Milled Edge (No Result)
 class _GoldCoinFace extends StatelessWidget {
   const _GoldCoinFace({
-    required this.isHeads,
+    required this.face,
     required this.size,
     required this.shineOffset,
   });
 
-  final bool isHeads;
+  final CoinFace face;
   final double size;
   final double shineOffset;
 
   @override
   Widget build(BuildContext context) {
+    final isHeads = face == CoinFace.heads;
+    final isNoResult = face == CoinFace.noResult;
+
     return Container(
       width: size,
       height: size,
@@ -402,11 +410,13 @@ class _GoldCoinFace extends StatelessWidget {
                 ),
                 child: Center(
                   child: Icon(
-                    isHeads
-                        ? Icons.workspace_premium_rounded // Crown emblem
-                        : Icons.stars_rounded, // Ringed star emblem
+                    isNoResult
+                        ? Icons.view_headline_rounded
+                        : (isHeads
+                            ? Icons.workspace_premium_rounded // Crown
+                            : Icons.stars_rounded), // Star
                     size: 30,
-                    color: const Color(0xFF7A4E06), // Embossed antique gold
+                    color: const Color(0xFF7A4E06),
                   ),
                 ),
               ),
@@ -414,12 +424,12 @@ class _GoldCoinFace extends StatelessWidget {
 
               // Small Caps Face Title
               Text(
-                isHeads ? 'HEADS' : 'TAILS',
+                isNoResult ? 'NO RESULT' : (isHeads ? 'HEADS' : 'TAILS'),
                 style: const TextStyle(
-                  fontSize: 13.5,
+                  fontSize: 12.5,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 2.5,
-                  color: Color(0xFF6B4302), // Deep engraved bronze-gold
+                  letterSpacing: 2.2,
+                  color: Color(0xFF6B4302),
                   shadows: [
                     Shadow(
                       color: Color(0x80FFE8A8),
@@ -456,7 +466,7 @@ class _GoldCoinFace extends StatelessWidget {
   }
 }
 
-/// Precise Milled Coin Rim Tick Painter (56 fine edge ticks)
+/// Custom painter for the 56 milled coin rim ridges
 class _MilledRimPainter extends CustomPainter {
   const _MilledRimPainter({required this.tickCount});
 
@@ -465,31 +475,41 @@ class _MilledRimPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width / 2) - 1.5;
-    const tickLength = 5.0;
+    final radius = size.width / 2;
+    const tickLen = 6.5;
 
-    final paintLight = Paint()
-      ..color = const Color(0xFFFFF0B8).withValues(alpha: 0.75)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
+    final paintTick = Paint()
+      ..color = const Color(0xFF8B5E0E).withValues(alpha: 0.55)
+      ..strokeWidth = 1.3
+      ..style = PaintingStyle.stroke;
 
-    final paintDark = Paint()
-      ..color = const Color(0xFF9E680E).withValues(alpha: 0.75)
-      ..strokeWidth = 1.4
-      ..strokeCap = StrokeCap.round;
+    final paintTickHighlight = Paint()
+      ..color = const Color(0xFFFFF0B8).withValues(alpha: 0.70)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < tickCount; i++) {
       final angle = (i * 2 * math.pi) / tickCount;
-      final p1 = Offset(
-        center.dx + (radius - tickLength) * math.cos(angle),
-        center.dy + (radius - tickLength) * math.sin(angle),
+      final cosA = math.cos(angle);
+      final sinA = math.sin(angle);
+
+      final pOuter = Offset(center.dx + radius * cosA, center.dy + radius * sinA);
+      final pInner = Offset(
+        center.dx + (radius - tickLen) * cosA,
+        center.dy + (radius - tickLen) * sinA,
       );
-      final p2 = Offset(
-        center.dx + radius * math.cos(angle),
-        center.dy + radius * math.sin(angle),
+
+      canvas.drawLine(pInner, pOuter, paintTick);
+
+      final pOuterHL = Offset(
+        center.dx + radius * cosA + 0.5,
+        center.dy + radius * sinA + 0.5,
       );
-      // Dual-tone tick for 3D metallic teeth effect
-      canvas.drawLine(p1, p2, i.isEven ? paintLight : paintDark);
+      final pInnerHL = Offset(
+        center.dx + (radius - tickLen) * cosA + 0.5,
+        center.dy + (radius - tickLen) * sinA + 0.5,
+      );
+      canvas.drawLine(pInnerHL, pOuterHL, paintTickHighlight);
     }
   }
 
@@ -498,46 +518,41 @@ class _MilledRimPainter extends CustomPainter {
       oldDelegate.tickCount != tickCount;
 }
 
-/// Landing Sparks Dash Particle Burst (Section 4)
+/// Flourish landing burst sparks painter (bursts when coin hits stage)
 class _CoinSparksPainter extends CustomPainter {
-  _CoinSparksPainter({required this.progress});
+  const _CoinSparksPainter({required this.progress});
 
   final double progress;
-  static final math.Random _rng = math.Random(1337);
 
   @override
   void paint(Canvas canvas, Size size) {
     if (progress <= 0 || progress >= 1.0) return;
 
-    final center = Offset(size.width / 2, size.height / 2);
-    final paint = Paint()
-      ..strokeWidth = 2.4 * (1.0 - progress)
+    final center = Offset(size.width / 2, size.height / 2 + 10);
+    const count = 8;
+    final easeP = Curves.easeOutCubic.transform(progress);
+    final alpha = (1.0 - progress).clamp(0.0, 1.0);
+
+    final sparkPaint = Paint()
+      ..color = const Color(0xFFF59E0B).withValues(alpha: alpha)
+      ..strokeWidth = 2.2
       ..strokeCap = StrokeCap.round;
 
-    const sparkCount = 8;
-    for (int i = 0; i < sparkCount; i++) {
-      final baseAngle = (i * 2 * math.pi) / sparkCount;
-      final jitter = (_rng.nextDouble() - 0.5) * 0.2;
-      final angle = baseAngle + jitter;
-
-      final startDist = 78.0 + (progress * 38.0);
-      final endDist = startDist + 8.0 + (progress * 6.0);
-
-      final alpha = (1.0 - progress).clamp(0.0, 1.0);
-      paint.color = i.isEven
-          ? const Color(0xFFF2C75C).withValues(alpha: alpha)
-          : const Color(0xFFF28C28).withValues(alpha: alpha);
+    for (int i = 0; i < count; i++) {
+      final angle = (i * 2 * math.pi / count) + (i % 2 == 0 ? 0.2 : -0.15);
+      final distStart = 78.0 + (easeP * 20.0);
+      final distEnd = distStart + 10.0 + (easeP * 12.0);
 
       final p1 = Offset(
-        center.dx + (startDist * math.cos(angle)),
-        center.dy + (startDist * math.sin(angle)),
+        center.dx + distStart * math.cos(angle),
+        center.dy + (distStart * 0.45) * math.sin(angle),
       );
       final p2 = Offset(
-        center.dx + (endDist * math.cos(angle)),
-        center.dy + (endDist * math.sin(angle)),
+        center.dx + distEnd * math.cos(angle),
+        center.dy + (distEnd * 0.45) * math.sin(angle),
       );
 
-      canvas.drawLine(p1, p2, paint);
+      canvas.drawLine(p1, p2, sparkPaint);
     }
   }
 

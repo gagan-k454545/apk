@@ -108,15 +108,11 @@ class PremiumBottomNav extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     required this.onCenterTap,
-    this.hasUnreadAlerts = true,
-    this.onAlertsTap,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final VoidCallback onCenterTap;
-  final bool hasUnreadAlerts;
-  final VoidCallback? onAlertsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -157,12 +153,11 @@ class PremiumBottomNav extends StatelessWidget {
               ),
             ),
           ),
-          // Navigation Tab Items with Equal Clearance Around Center FAB
+          // Navigation Tab Items with Equal Clearance Around Center FAB (Home, Groups | FAB | Coin Toss, History)
           Row(
             children: [
               // 1. Home (index 0)
               Expanded(
-                flex: 12,
                 child: _buildTabItem(
                   index: 0,
                   icon: Icons.home_rounded,
@@ -174,7 +169,6 @@ class PremiumBottomNav extends StatelessWidget {
 
               // 2. Groups (index 1)
               Expanded(
-                flex: 12,
                 child: _buildTabItem(
                   index: 1,
                   icon: Icons.groups_rounded,
@@ -184,56 +178,11 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // 3. Alerts (Bell with optional orange dot - Icon Only)
-              SizedBox(
-                width: 36,
-                child: PressableScale(
-                  onTap: () {
-                    if (onAlertsTap != null) {
-                      onAlertsTap!();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('All caught up! No new notifications.'),
-                          duration: Duration(seconds: 2),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    }
-                  },
-                  targetScale: 0.94,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Icon(
-                        Icons.notifications_none_rounded,
-                        size: 22,
-                        color: PremiumDesignTokens.textMuted,
-                      ),
-                      if (hasUnreadAlerts)
-                        Positioned(
-                          top: 18,
-                          right: 8,
-                          child: Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: PremiumDesignTokens.orange500,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-
               // Equal Center Clearance for Raised FAB
-              const SizedBox(width: 62),
+              const SizedBox(width: 68),
 
-              // 4. Coin Toss (index 2)
+              // 3. Coin Toss (index 2)
               Expanded(
-                flex: 12,
                 child: _buildTabItem(
                   index: 2,
                   icon: Icons.monetization_on_rounded,
@@ -243,27 +192,14 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // 5. History (index 3)
+              // 4. History (index 3)
               Expanded(
-                flex: 12,
                 child: _buildTabItem(
                   index: 3,
                   icon: Icons.history_rounded,
                   unselectedIcon: Icons.history_outlined,
                   label: 'History',
                   isSelected: currentIndex == 3,
-                ),
-              ),
-
-              // 6. Settings (index 4)
-              Expanded(
-                flex: 12,
-                child: _buildTabItem(
-                  index: 4,
-                  icon: Icons.settings_rounded,
-                  unselectedIcon: Icons.settings_outlined,
-                  label: 'Settings',
-                  isSelected: currentIndex == 4,
                 ),
               ),
             ],
