@@ -887,6 +887,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
   void _confirmClearHistory(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

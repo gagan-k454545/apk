@@ -11,12 +11,14 @@ class PremiumTopBar extends StatelessWidget {
     this.onBack,
     this.onCopy,
     this.onShare,
+    this.onSortAlphabetical,
   });
 
   final String groupName;
   final VoidCallback? onBack;
   final VoidCallback? onCopy;
   final VoidCallback? onShare;
+  final VoidCallback? onSortAlphabetical;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +47,18 @@ class PremiumTopBar extends StatelessWidget {
           GroupChip(name: groupName),
 
           const Spacer(),
+
+          // Sort Alphabetically Action Button
+          if (onSortAlphabetical != null) ...[
+            _buildCircularButton(
+              icon: Icons.sort_by_alpha_rounded,
+              tooltip: 'Sort Names A-Z',
+              onTap: onSortAlphabetical!,
+              isDark: isDark,
+              theme: theme,
+            ),
+            const SizedBox(width: 10),
+          ],
 
           // Copy Action Button
           if (onCopy != null)

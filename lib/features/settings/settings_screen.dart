@@ -257,6 +257,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),
@@ -319,6 +320,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),
@@ -423,6 +425,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
@@ -571,6 +574,7 @@ class SettingsScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),

@@ -233,6 +233,29 @@ class _PremiumShuffleResultScreenState
     );
   }
 
+  void _sortAlphabetical() {
+    if (_isShuffling) return;
+    HapticFeedback.mediumImpact();
+    setState(() {
+      _result.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      _visualShuffleList = List<String>.from(_result);
+      _isSaved = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.sort_by_alpha_rounded, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Names sorted alphabetically (A-Z)'),
+          ],
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(milliseconds: 1800),
+      ),
+    );
+  }
+
   String get _resultAsText {
     return _result
         .asMap()
@@ -275,7 +298,7 @@ class _PremiumShuffleResultScreenState
         bottom: false,
         child: Column(
           children: [
-            // A & B: Top Bar with Back, GroupChip ("Cricket 6"), Share & Copy
+            // A & B: Top Bar with Back, GroupChip ("Cricket 6"), Share, Copy & Sort A-Z
             PremiumTopBar(
               groupName: _groupName,
               onBack: () {
@@ -287,6 +310,7 @@ class _PremiumShuffleResultScreenState
               },
               onCopy: _copyResult,
               onShare: _shareResult,
+              onSortAlphabetical: _isShuffling ? null : _sortAlphabetical,
             ),
 
             // Scrollable Content
@@ -394,6 +418,7 @@ class _PremiumShuffleResultScreenState
     HapticFeedback.selectionClick();
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
         final theme = Theme.of(context);

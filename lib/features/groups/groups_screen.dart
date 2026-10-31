@@ -11,9 +11,9 @@ import '../../providers/providers.dart';
 /// and Emil Kowalski's Design Engineering principles:
 /// - Inset grouped hierarchy with 3-level surfaces
 /// - Minimum 44x44 pt touch targets for all interactive controls
-/// - Tactile active press states (scale 0.98) with subtle haptics
-/// - Snappy ease-out transitions (<250ms), no scale(0)
-/// - iOS-style rounded bottom sheets for creation & renaming
+/// - Direct group deletion from cards and rename/edit sheets
+/// - Alphabetical A-Z sorting toggle
+/// - iOS-style rounded bottom sheets with useRootNavigator to avoid bottom nav overlay
 class GroupsScreen extends ConsumerStatefulWidget {
   const GroupsScreen({super.key});
 
@@ -24,6 +24,7 @@ class GroupsScreen extends ConsumerStatefulWidget {
 class _GroupsScreenState extends ConsumerState<GroupsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _sortByAlphabetical = false;
 
   @override
   void dispose() {
@@ -37,11 +38,16 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     final filteredGroups = _searchQuery.isEmpty
-        ? groups
+        ? List<Group>.from(groups)
         : groups
             .where((g) =>
                 g.name.toLowerCase().contains(_searchQuery.toLowerCase()))
             .toList();
+
+    if (_sortByAlphabetical) {
+      filteredGroups.sort((a, b) =>
+          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    }
 
     return Scaffold(
       backgroundColor: PremiumDesignTokens.bgApp,
@@ -110,67 +116,129 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
               ),
             ),
 
-            // iOS-style Inset Search Field
+            // Inset Search Field & A-Z Sort Toggle
             if (groups.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
-                  child: Container(
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: PremiumDesignTokens.innerBorder,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: PremiumDesignTokens.innerBorder,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 12),
+                              const Icon(
+                                Icons.search_rounded,
+                                size: 20,
+                                color: PremiumDesignTokens.textMuted,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  onChanged: (val) =>
+                                      setState(() => _searchQuery = val.trim()),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: PremiumDesignTokens.textStrong,
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Search groups...',
+                                    hintStyle: TextStyle(
+                                      fontSize: 15,
+                                      color: PremiumDesignTokens.textMuted,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                              if (_searchQuery.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: const Padding(
+                                    padding:
+                                        EdgeInsets.symmetric(horizontal: 10),
+                                    child: Icon(
+                                      Icons.cancel,
+                                      size: 18,
+                                      color: PremiumDesignTokens.textMuted,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.search_rounded,
-                          size: 20,
-                          color: PremiumDesignTokens.textMuted,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: (val) =>
-                                setState(() => _searchQuery = val.trim()),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              color: PremiumDesignTokens.textStrong,
+                      const SizedBox(width: 8),
+                      // Alphabetical Sort Button
+                      PressableScale(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _sortByAlphabetical = !_sortByAlphabetical;
+                          });
+                        },
+                        child: Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: _sortByAlphabetical
+                                ? PremiumDesignTokens.forestDark
+                                : Colors.white.withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _sortByAlphabetical
+                                  ? PremiumDesignTokens.forestDark
+                                  : PremiumDesignTokens.innerBorder,
                             ),
-                            decoration: const InputDecoration(
-                              hintText: 'Search groups...',
-                              hintStyle: TextStyle(
-                                fontSize: 15,
-                                color: PremiumDesignTokens.textMuted,
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x101B4332),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
                               ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
+                            ],
                           ),
-                        ),
-                        if (_searchQuery.isNotEmpty)
-                          GestureDetector(
-                            onTap: () {
-                              _searchController.clear();
-                              setState(() => _searchQuery = '');
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Icon(
-                                Icons.cancel,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.sort_by_alpha_rounded,
                                 size: 18,
-                                color: PremiumDesignTokens.textMuted,
+                                color: _sortByAlphabetical
+                                    ? Colors.white
+                                    : PremiumDesignTokens.forestDark,
                               ),
-                            ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'A-Z',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: _sortByAlphabetical
+                                      ? Colors.white
+                                      : PremiumDesignTokens.forestDark,
+                                ),
+                              ),
+                            ],
                           ),
-                      ],
-                    ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -336,6 +404,8 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                               context.push('/shuffle/${group.id}'),
                           onEdit: () => _showEditSheet(
                               context, group.id, group.name),
+                          onDelete: () => _deleteGroupWithPrompt(
+                              context, group.id, group.name),
                         ),
                       ),
                     );
@@ -345,12 +415,34 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
 
             // Safe Clearance for Bottom Nav + Home Indicator
             SliverPadding(
-              padding: EdgeInsets.only(bottom: 100 + bottomInset),
+              padding: EdgeInsets.only(bottom: 130 + bottomInset),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _deleteGroupWithPrompt(
+      BuildContext context, String groupId, String name) async {
+    final confirmed = await _confirmDelete(context, name);
+    if (confirmed == true && mounted) {
+      await ref.read(groupsProvider.notifier).deleteGroup(groupId);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deleted "$name"'),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                ref.read(groupsProvider.notifier).addGroup(name);
+              },
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _showCreateSheet(BuildContext context) {
@@ -359,11 +451,12 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
           left: 20,
           right: 20,
           top: 12,
@@ -486,146 +579,206 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
           ],
         ),
       ),
     );
   }
 
-  void _showEditSheet(BuildContext context, String groupId, String currentName) {
+  void _showEditSheet(
+      BuildContext context, String groupId, String currentName) {
     HapticFeedback.lightImpact();
     final controller = TextEditingController(text: currentName);
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (sheetContext) => Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 12,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          boxShadow: [
-            BoxShadow(
-              color: Color(0x261B4332),
-              blurRadius: 24,
-              offset: Offset(0, -6),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 5,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            left: 20,
+            right: 20,
+            top: 12,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x261B4332),
+                blurRadius: 24,
+                offset: Offset(0, -6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(sheetContext),
+                    child: const SizedBox(
+                      width: 60,
+                      height: 44,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: PremiumDesignTokens.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    'Rename Group',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      final name = controller.text.trim();
+                      if (name.isNotEmpty) {
+                        HapticFeedback.selectionClick();
+                        ref
+                            .read(groupsProvider.notifier)
+                            .renameGroup(groupId, name);
+                        Navigator.pop(sheetContext);
+                      }
+                    },
+                    child: const SizedBox(
+                      width: 60,
+                      height: 44,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Save',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: PremiumDesignTokens.forestDark,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(3),
+                  color: const Color(0xFFF1E8DA).withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: PremiumDesignTokens.innerBorder),
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(sheetContext),
-                  child: const SizedBox(
-                    width: 60,
-                    height: 44,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        autofocus: true,
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (_) => setSheetState(() {}),
+                        style: const TextStyle(
                           fontSize: 16,
+                          color: PremiumDesignTokens.textStrong,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Group name',
+                          border: InputBorder.none,
+                        ),
+                        onSubmitted: (val) {
+                          final name = val.trim();
+                          if (name.isNotEmpty) {
+                            HapticFeedback.selectionClick();
+                            ref
+                                .read(groupsProvider.notifier)
+                                .renameGroup(groupId, name);
+                            Navigator.pop(sheetContext);
+                          }
+                        },
+                      ),
+                    ),
+                    if (controller.text.isNotEmpty)
+                      GestureDetector(
+                        onTap: () {
+                          controller.clear();
+                          setSheetState(() {});
+                        },
+                        child: const Icon(
+                          Icons.cancel_rounded,
+                          size: 18,
                           color: PremiumDesignTokens.textMuted,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                  ),
+                  ],
                 ),
-                const Text(
-                  'Rename Group',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: PremiumDesignTokens.textStrong,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    final name = controller.text.trim();
-                    if (name.isNotEmpty) {
-                      HapticFeedback.selectionClick();
-                      ref
-                          .read(groupsProvider.notifier)
-                          .renameGroup(groupId, name);
-                      Navigator.pop(sheetContext);
-                    }
-                  },
-                  child: const SizedBox(
-                    width: 60,
-                    height: 44,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Save',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: PremiumDesignTokens.forestDark,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1E8DA).withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: PremiumDesignTokens.innerBorder),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: controller,
-                autofocus: true,
-                textCapitalization: TextCapitalization.words,
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: PremiumDesignTokens.textStrong,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                ),
-                onSubmitted: (val) {
-                  final name = val.trim();
-                  if (name.isNotEmpty) {
-                    HapticFeedback.selectionClick();
-                    ref
-                        .read(groupsProvider.notifier)
-                        .renameGroup(groupId, name);
-                    Navigator.pop(sheetContext);
-                  }
+              const SizedBox(height: 14),
+              // Option to delete group right inside edit/rename sheet
+              PressableScale(
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  await _deleteGroupWithPrompt(context, groupId, currentName);
                 },
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFDE8E8),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF8B4B4)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.delete_outline_rounded,
+                        size: 19,
+                        color: Color(0xFFE53935),
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Delete Group',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFE53935),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-          ],
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );
@@ -635,6 +788,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
     HapticFeedback.lightImpact();
     return showModalBottomSheet<bool>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),
@@ -720,12 +874,14 @@ class _IOSGroupCard extends StatelessWidget {
     required this.onTap,
     required this.onShuffle,
     required this.onEdit,
+    required this.onDelete,
   });
 
   final Group group;
   final VoidCallback onTap;
   final VoidCallback onShuffle;
   final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -838,12 +994,12 @@ class _IOSGroupCard extends StatelessWidget {
               ),
             ),
 
-            // Edit button (44x44 touch target)
+            // Edit button (38x44 touch target)
             GestureDetector(
               onTap: onEdit,
               behavior: HitTestBehavior.opaque,
               child: Container(
-                width: 44,
+                width: 38,
                 height: 44,
                 alignment: Alignment.center,
                 child: const Icon(
@@ -853,6 +1009,23 @@ class _IOSGroupCard extends StatelessWidget {
                 ),
               ),
             ),
+
+            // Delete button (38x44 touch target)
+            GestureDetector(
+              onTap: onDelete,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: 38,
+                height: 44,
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  size: 19,
+                  color: Color(0xFFC53030),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
 
             // Quick Shuffle Button
             if (group.memberCount >= 2) ...[

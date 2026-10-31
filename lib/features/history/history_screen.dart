@@ -505,6 +505,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),
@@ -592,6 +593,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),

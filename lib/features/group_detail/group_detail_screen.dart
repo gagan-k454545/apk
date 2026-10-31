@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +11,12 @@ import '../../providers/providers.dart';
 
 /// Group Detail Screen designed following Apple Human Interface Guidelines:
 /// - iOS Large Navigation Bar with prominent back button (44x44pt)
+/// - Sort names alphabetically A-Z action button & toolbar
+/// - Direct group deletion option with modal confirmation
 /// - Inset Grouped members list with rank indicators
 /// - Favorite toggle with spring animation and haptic feedback
 /// - Tactile "SHUFFLE NOW" button pinned at bottom with blur and safe area
-/// - iOS style modal bottom sheets for adding and editing members
+/// - iOS style modal bottom sheets for adding and editing members with useRootNavigator
 class GroupDetailScreen extends ConsumerStatefulWidget {
   const GroupDetailScreen({super.key, required this.groupId});
 
@@ -117,31 +120,103 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                         ],
                       ),
                     ),
-                    // Quick Action: Add names
-                    GestureDetector(
-                      onTap: () => _showAddNameSheet(context, group),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: PremiumDesignTokens.innerBorder,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x141B4332),
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
+
+                    // Quick Action: Sort Names A-Z
+                    if (group.members.isNotEmpty) ...[
+                      Tooltip(
+                        message: 'Sort names A-Z',
+                        child: GestureDetector(
+                          onTap: () => _sortAlphabetically(context, group),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: PremiumDesignTokens.innerBorder,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x141B4332),
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
+                            child: const Icon(
+                              Icons.sort_by_alpha_rounded,
+                              size: 19,
+                              color: PremiumDesignTokens.forestDark,
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.person_add_outlined,
-                          size: 20,
-                          color: PremiumDesignTokens.forestDark,
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+
+                    // Quick Action: Delete Group
+                    Tooltip(
+                      message: 'Delete Group',
+                      child: GestureDetector(
+                        onTap: () => _confirmDeleteGroup(context, group),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFDE8E8),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFFF8B4B4),
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x141B4332),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: 19,
+                            color: Color(0xFFE53935),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Quick Action: Add names
+                    Tooltip(
+                      message: 'Add Name',
+                      child: GestureDetector(
+                        onTap: () => _showAddNameSheet(context, group),
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: PremiumDesignTokens.innerBorder,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x141B4332),
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.person_add_outlined,
+                            size: 19,
+                            color: PremiumDesignTokens.forestDark,
+                          ),
                         ),
                       ),
                     ),
@@ -154,7 +229,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
             if (group.members.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 14),
+                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
                   child: Container(
                     height: 42,
                     decoration: BoxDecoration(
@@ -211,6 +286,67 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                           ),
                       ],
                     ),
+                  ),
+                ),
+              ),
+
+            // Members Toolbar: Count + Quick Sort Button
+            if (group.members.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 2, 22, 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${filteredMembers.length} ${filteredMembers.length == 1 ? 'name' : 'names'}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: PremiumDesignTokens.textMuted,
+                        ),
+                      ),
+                      PressableScale(
+                        onTap: () => _sortAlphabetically(context, group),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: PremiumDesignTokens.innerBorder,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x0F1B4332),
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.sort_by_alpha_rounded,
+                                size: 14,
+                                color: PremiumDesignTokens.forestDark,
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Sort A-Z',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: PremiumDesignTokens.forestDark,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -427,17 +563,131 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
     );
   }
 
+  Future<void> _sortAlphabetically(BuildContext context, Group group) async {
+    unawaited(HapticFeedback.mediumImpact());
+    await ref
+        .read(groupsProvider.notifier)
+        .sortMembersAlphabetically(widget.groupId);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Names sorted alphabetically (A-Z) in "${group.name}"'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(milliseconds: 1800),
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmDeleteGroup(BuildContext context, Group group) async {
+    unawaited(HapticFeedback.lightImpact());
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        margin: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: PremiumDesignTokens.cardShadow,
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    'Delete Group?',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'All member names in "${group.name}" will be permanently removed.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  PressableScale(
+                    onTap: () => Navigator.pop(sheetContext, true),
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Delete Group',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFE53935),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            PressableScale(
+              onTap: () => Navigator.pop(sheetContext, false),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: PremiumDesignTokens.cardShadow,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: PremiumDesignTokens.forestDark,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await ref.read(groupsProvider.notifier).deleteGroup(group.id);
+      if (context.mounted) {
+        context.pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deleted "${group.name}"'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   void _showAddNameSheet(BuildContext context, Group group) {
     HapticFeedback.lightImpact();
     final controller = TextEditingController();
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
           left: 20,
           right: 20,
           top: 12,
@@ -498,14 +748,16 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     final name = controller.text.trim();
                     if (name.isNotEmpty) {
-                      HapticFeedback.selectionClick();
-                      ref
+                      unawaited(HapticFeedback.selectionClick());
+                      await ref
                           .read(groupsProvider.notifier)
                           .addMember(widget.groupId, name);
-                      Navigator.pop(sheetContext);
+                      if (sheetContext.mounted) {
+                        Navigator.pop(sheetContext);
+                      }
                     }
                   },
                   child: const SizedBox(
@@ -551,19 +803,21 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   ),
                   border: InputBorder.none,
                 ),
-                onSubmitted: (val) {
+                onSubmitted: (val) async {
                   final name = val.trim();
                   if (name.isNotEmpty) {
-                    HapticFeedback.selectionClick();
-                    ref
+                    unawaited(HapticFeedback.selectionClick());
+                    await ref
                         .read(groupsProvider.notifier)
                         .addMember(widget.groupId, name);
-                    Navigator.pop(sheetContext);
+                    if (sheetContext.mounted) {
+                      Navigator.pop(sheetContext);
+                    }
                   }
                 },
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -577,11 +831,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 20,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
           left: 20,
           right: 20,
           top: 12,
@@ -642,14 +897,16 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     final name = controller.text.trim();
                     if (name.isNotEmpty) {
-                      HapticFeedback.selectionClick();
-                      ref
+                      unawaited(HapticFeedback.selectionClick());
+                      await ref
                           .read(groupsProvider.notifier)
                           .editMember(groupId, memberId, name);
-                      Navigator.pop(sheetContext);
+                      if (sheetContext.mounted) {
+                        Navigator.pop(sheetContext);
+                      }
                     }
                   },
                   child: const SizedBox(
@@ -690,19 +947,21 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                 ),
-                onSubmitted: (val) {
+                onSubmitted: (val) async {
                   final name = val.trim();
                   if (name.isNotEmpty) {
-                    HapticFeedback.selectionClick();
-                    ref
+                    unawaited(HapticFeedback.selectionClick());
+                    await ref
                         .read(groupsProvider.notifier)
                         .editMember(groupId, memberId, name);
-                    Navigator.pop(sheetContext);
+                    if (sheetContext.mounted) {
+                      Navigator.pop(sheetContext);
+                    }
                   }
                 },
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
           ],
         ),
       ),
@@ -715,6 +974,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) => Container(
         margin: const EdgeInsets.all(16),
@@ -749,12 +1009,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen> {
                   ),
                   const Divider(height: 24),
                   PressableScale(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      ref
+                    onTap: () async {
+                      unawaited(HapticFeedback.selectionClick());
+                      await ref
                           .read(groupsProvider.notifier)
                           .removeMember(groupId, memberId);
-                      Navigator.pop(sheetContext);
+                      if (sheetContext.mounted) {
+                        Navigator.pop(sheetContext);
+                      }
                     },
                     child: Container(
                       height: 44,
@@ -863,12 +1125,12 @@ class _IOSMemberCard extends StatelessWidget {
             ),
           ),
 
-          // Favorite Star (44x44pt hit area)
+          // Favorite Star (40x44pt hit area)
           GestureDetector(
             onTap: onFavorite,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              width: 44,
+              width: 38,
               height: 44,
               alignment: Alignment.center,
               child: Icon(
@@ -883,12 +1145,12 @@ class _IOSMemberCard extends StatelessWidget {
             ),
           ),
 
-          // Edit Button (44x44pt hit area)
+          // Edit Button (38x44pt hit area)
           GestureDetector(
             onTap: onTap,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              width: 44,
+              width: 38,
               height: 44,
               alignment: Alignment.center,
               child: const Icon(
@@ -899,11 +1161,27 @@ class _IOSMemberCard extends StatelessWidget {
             ),
           ),
 
-          // Reorder Drag Handle (44x44pt hit area)
+          // Delete Member Button (38x44pt hit area)
+          GestureDetector(
+            onTap: onDelete,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              width: 38,
+              height: 44,
+              alignment: Alignment.center,
+              child: const Icon(
+                Icons.delete_outline_rounded,
+                size: 19,
+                color: Color(0xFFC53030),
+              ),
+            ),
+          ),
+
+          // Reorder Drag Handle (34x44pt hit area)
           ReorderableDragStartListener(
             index: index,
             child: Container(
-              width: 36,
+              width: 34,
               height: 44,
               alignment: Alignment.center,
               child: const Icon(

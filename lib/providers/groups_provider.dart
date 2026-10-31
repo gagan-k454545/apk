@@ -97,6 +97,18 @@ class GroupsNotifier extends StateNotifier<List<Group>> {
     _load();
   }
 
+  Future<void> sortMembersAlphabetically(String groupId,
+      {bool ascending = true}) async {
+    final group = _repository.getGroup(groupId);
+    if (group == null) return;
+    final sortedMembers = List<NameEntry>.from(group.members)
+      ..sort((a, b) => ascending
+          ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
+          : b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    await _repository.saveGroup(group.copyWith(members: sortedMembers));
+    _load();
+  }
+
   Group? getGroupById(String id) => _repository.getGroup(id);
 }
 
