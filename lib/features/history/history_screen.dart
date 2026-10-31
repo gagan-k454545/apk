@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import '../../providers/providers.dart';
-import '../../models/models.dart';
 
+import '../../core/theme/premium_design_tokens.dart';
+import '../../core/widgets/premium/pressable_scale.dart';
+import '../../models/models.dart';
+import '../../providers/providers.dart';
+
+/// History Screen following Apple Human Interface Guidelines:
+/// - iOS Segmented Control for switching Shuffles & Coin Tosses
+/// - Date grouped sections ("Today", "Yesterday", "Earlier")
+/// - Inset Grouped card architecture with 3-level surface hierarchy
+/// - 44x44 pt touch targets for all interactive elements
+/// - Tactile press feedback with subtle haptics
 class HistoryScreen extends ConsumerStatefulWidget {
   const HistoryScreen({super.key});
 
@@ -17,98 +26,154 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final history = ref.watch(historyProvider);
     final coinTossHistory = ref.watch(coinTossProvider);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+
+    final bool hasItems = _selectedTab == 0
+        ? history.isNotEmpty
+        : coinTossHistory.isNotEmpty;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar.large(
-            title: const Text('History'),
-            actions: [
-              if ((_selectedTab == 0 && history.isNotEmpty) ||
-                  (_selectedTab == 1 && coinTossHistory.isNotEmpty))
-                IconButton(
-                  onPressed: () {
-                    if (_selectedTab == 0) {
-                      _confirmClearShuffleHistory(context, ref);
-                    } else {
-                      _confirmClearCoinHistory(context, ref);
-                    }
-                  },
-                  icon: const Icon(Icons.delete_sweep_outlined),
-                  tooltip: 'Clear History',
+      backgroundColor: PremiumDesignTokens.bgApp,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // iOS Large Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'History',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: PremiumDesignTokens.textStrong,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedTab == 0
+                                ? '${history.length} completed ${history.length == 1 ? 'shuffle' : 'shuffles'}'
+                                : '${coinTossHistory.length} total coin ${coinTossHistory.length == 1 ? 'toss' : 'tosses'}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: PremiumDesignTokens.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (hasItems)
+                      GestureDetector(
+                        onTap: () {
+                          if (_selectedTab == 0) {
+                            _confirmClearShuffleHistory(context);
+                          } else {
+                            _confirmClearCoinHistory(context);
+                          }
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.delete_sweep_outlined,
+                            size: 22,
+                            color: PremiumDesignTokens.textMuted,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: SegmentedButton<int>(
-                segments: const [
-                  ButtonSegment(
-                    value: 0,
-                    label: Text('Name Shuffles'),
-                    icon: Icon(Icons.shuffle),
-                  ),
-                  ButtonSegment(
-                    value: 1,
-                    label: Text('Coin Tosses'),
-                    icon: Icon(Icons.monetization_on_outlined),
-                  ),
-                ],
-                selected: {_selectedTab},
-                onSelectionChanged: (set) {
-                  setState(() {
-                    _selectedTab = set.first;
-                  });
-                },
               ),
             ),
-          ),
-          if (_selectedTab == 0)
-            ..._buildShuffleHistorySlivers(context, theme, history)
-          else
-            ..._buildCoinTossHistorySlivers(context, theme, coinTossHistory),
-          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-        ],
+
+            // iOS Sliding Segmented Control
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
+                child: _IOSSegmentedControl(
+                  selectedIndex: _selectedTab,
+                  onChanged: (index) {
+                    setState(() => _selectedTab = index);
+                  },
+                ),
+              ),
+            ),
+
+            // Content Slivers
+            if (_selectedTab == 0)
+              ..._buildShuffleHistorySlivers(context, history)
+            else
+              ..._buildCoinTossHistorySlivers(context, coinTossHistory),
+
+            // Bottom Nav Clearance
+            SliverPadding(
+              padding: EdgeInsets.only(bottom: 110 + bottomInset),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   List<Widget> _buildShuffleHistorySlivers(
-      BuildContext context, ThemeData theme, List<HistoryEntry> history) {
+      BuildContext context, List<HistoryEntry> history) {
     if (history.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Center(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.history_outlined,
-                    size: 80,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  )
-                      .animate()
-                      .fadeIn(delay: 200.ms)
-                      .scale(begin: const Offset(0.8, 0.8)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Shuffle History',
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your name shuffle results will appear here.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: PremiumDesignTokens.cardBorder),
+                      boxShadow: PremiumDesignTokens.cardShadow,
                     ),
+                    child: const Icon(
+                      Icons.shuffle_rounded,
+                      size: 38,
+                      color: PremiumDesignTokens.forestDark,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'No Shuffle History',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Your randomized order results will be logged here for easy review.',
                     textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -118,76 +183,98 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ];
     }
 
-    final groupedHistory = _groupByDate(history);
+    final grouped = _groupByDate(history);
     final slivers = <Widget>[];
 
-    for (final entry in groupedHistory.entries) {
+    for (final entry in grouped.entries) {
       slivers.add(
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-          sliver: SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  entry.key,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ).animate().fadeIn(),
-                const SizedBox(height: 8),
-                ...entry.value.map((historyEntry) {
-                  return _HistoryCard(
-                    entry: historyEntry,
-                    onDelete: () {
-                      ref
-                          .read(historyProvider.notifier)
-                          .deleteEntry(historyEntry.id);
-                    },
-                  );
-                }),
-              ],
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 20, 6),
+            child: Text(
+              entry.key.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: PremiumDesignTokens.textMuted,
+                letterSpacing: 0.8,
+              ),
             ),
           ),
         ),
       );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          sliver: SliverList.builder(
+            itemCount: entry.value.length,
+            itemBuilder: (context, index) {
+              final item = entry.value[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _IOSShuffleHistoryCard(
+                  entry: item,
+                  onDelete: () {
+                    HapticFeedback.lightImpact();
+                    ref.read(historyProvider.notifier).deleteEntry(item.id);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      );
     }
+
     return slivers;
   }
 
   List<Widget> _buildCoinTossHistorySlivers(
-      BuildContext context, ThemeData theme, List<CoinTossEntry> coinTosses) {
+      BuildContext context, List<CoinTossEntry> coinTosses) {
     if (coinTosses.isEmpty) {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Center(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    Icons.monetization_on_outlined,
-                    size: 80,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  )
-                      .animate()
-                      .fadeIn(delay: 200.ms)
-                      .scale(begin: const Offset(0.8, 0.8)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No Coin Toss History',
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Your coin toss decisions will appear here.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: PremiumDesignTokens.cardBorder),
+                      boxShadow: PremiumDesignTokens.cardShadow,
                     ),
+                    child: const Icon(
+                      Icons.monetization_on_outlined,
+                      size: 38,
+                      color: Color(0xFFD69A2D),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'No Coin Toss History',
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Decide instant 50/50 heads or tails flips. Results will appear here.',
                     textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                      height: 1.4,
+                    ),
                   ),
                 ],
               ),
@@ -197,52 +284,187 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ];
     }
 
-    final timeFormat = DateFormat('h:mm a · MMM d');
+    final int headsCount = coinTosses.where((e) => e.isHeads).length;
+    final int tailsCount = coinTosses.length - headsCount;
+    final double headsPercent =
+        coinTosses.isNotEmpty ? (headsCount / coinTosses.length) * 100 : 0.0;
 
     return [
+      // Quick Stats Banner
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: PremiumDesignTokens.cardBorder),
+              boxShadow: PremiumDesignTokens.cardShadow,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'HEADS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFCA8A04),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$headsCount (${headsPercent.toStringAsFixed(0)}%)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: PremiumDesignTokens.textStrong,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 1,
+                  height: 32,
+                  color: Colors.black.withValues(alpha: 0.08),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'TAILS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: PremiumDesignTokens.forestDark,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$tailsCount (${(100 - headsPercent).toStringAsFixed(0)}%)',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: PremiumDesignTokens.textStrong,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+
+      // Coin Toss List
       SliverPadding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         sliver: SliverList.builder(
           itemCount: coinTosses.length,
           itemBuilder: (context, index) {
             final entry = coinTosses[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 8),
-              child: ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: entry.isHeads
-                        ? const Color(0xFFFEF9C3)
-                        : theme.colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    entry.emoji,
-                    style: const TextStyle(fontSize: 20),
-                  ),
+            final timeFormat = DateFormat('h:mm a · MMM d');
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: PremiumDesignTokens.cardBorder),
+                  boxShadow: PremiumDesignTokens.cardShadow,
                 ),
-                title: Text(
-                  entry.resultText,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: entry.isHeads
-                        ? const Color(0xFFCA8A04)
-                        : theme.colorScheme.primary,
-                  ),
-                ),
-                subtitle: Text(
-                  timeFormat.format(entry.tossedAt),
-                  style: theme.textTheme.bodySmall,
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  onPressed: () {
-                    ref.read(coinTossProvider.notifier).deleteEntry(entry.id);
-                  },
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: entry.isHeads
+                            ? const Color(0xFFFDF7E7)
+                            : const Color(0xFFEAF1E9),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: entry.isHeads
+                              ? const Color(0xFFE8CF96)
+                              : const Color(0xFFD0E0CE),
+                          width: 0.8,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        entry.isHeads
+                            ? Icons.monetization_on_rounded
+                            : Icons.shield_rounded,
+                        size: 22,
+                        color: entry.isHeads
+                            ? const Color(0xFFD69A2D)
+                            : PremiumDesignTokens.forestDark,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.resultText,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: entry.isHeads
+                                  ? const Color(0xFFCA8A04)
+                                  : PremiumDesignTokens.forestDark,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            timeFormat.format(entry.tossedAt),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: PremiumDesignTokens.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref
+                            .read(coinTossProvider.notifier)
+                            .deleteEntry(entry.id);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: const SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Icon(
+                            Icons.delete_outline,
+                            size: 19,
+                            color: PremiumDesignTokens.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ).animate().fadeIn(delay: Duration(milliseconds: index * 30));
+            );
           },
         ),
       ),
@@ -278,62 +500,278 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     return grouped;
   }
 
-  void _confirmClearShuffleHistory(BuildContext context, WidgetRef ref) {
-    showDialog(
+  void _confirmClearShuffleHistory(BuildContext context) {
+    HapticFeedback.lightImpact();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          Icons.delete_sweep_outlined,
-          color: Theme.of(context).colorScheme.error,
-          size: 32,
-        ),
-        title: const Text('Clear Shuffle History?'),
-        content: const Text('This will permanently remove all name shuffle history.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(historyProvider.notifier).clearAll();
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        margin: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: PremiumDesignTokens.cardShadow,
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    'Clear Shuffle History?',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'This will permanently delete all recorded shuffle orders.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  PressableScale(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      ref.read(historyProvider.notifier).clearAll();
+                      Navigator.pop(sheetContext);
+                    },
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Clear Shuffle History',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFF3B30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Text('Clear All'),
-          ),
-        ],
+            const SizedBox(height: 10),
+            PressableScale(
+              onTap: () => Navigator.pop(sheetContext),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: PremiumDesignTokens.cardShadow,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: PremiumDesignTokens.forestDark,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _confirmClearCoinHistory(BuildContext context, WidgetRef ref) {
-    showDialog(
+  void _confirmClearCoinHistory(BuildContext context) {
+    HapticFeedback.lightImpact();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: Icon(
-          Icons.delete_sweep_outlined,
-          color: Theme.of(context).colorScheme.error,
-          size: 32,
-        ),
-        title: const Text('Clear Coin History?'),
-        content: const Text('This will permanently remove all coin toss history.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(coinTossProvider.notifier).clearHistory();
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        margin: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: PremiumDesignTokens.cardShadow,
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    'Clear Coin History?',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'This will reset all coin toss records and counters.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  PressableScale(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      ref.read(coinTossProvider.notifier).clearHistory();
+                      Navigator.pop(sheetContext);
+                    },
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Clear Coin History',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFF3B30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Text('Clear All'),
+            const SizedBox(height: 10),
+            PressableScale(
+              onTap: () => Navigator.pop(sheetContext),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: PremiumDesignTokens.cardShadow,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: PremiumDesignTokens.forestDark,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// iOS Segmented Control with smooth sliding pill animation.
+class _IOSSegmentedControl extends StatelessWidget {
+  const _IOSSegmentedControl({
+    required this.selectedIndex,
+    required this.onChanged,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: const Color(0x1F1B4332), // subtle tint
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Stack(
+        children: [
+          // Animated sliding white pill
+          AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: const Cubic(0.23, 1.0, 0.32, 1.0),
+            alignment: selectedIndex == 0
+                ? Alignment.centerLeft
+                : Alignment.centerRight,
+            child: FractionallySizedBox(
+              widthFactor: 0.5,
+              heightFactor: 1.0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x1A1B4332),
+                      blurRadius: 4,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Tap labels
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onChanged(0);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: Text(
+                      'Name Shuffles',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selectedIndex == 0
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selectedIndex == 0
+                            ? PremiumDesignTokens.forestDark
+                            : PremiumDesignTokens.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    onChanged(1);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Center(
+                    child: Text(
+                      'Coin Tosses',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selectedIndex == 1
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selectedIndex == 1
+                            ? PremiumDesignTokens.forestDark
+                            : PremiumDesignTokens.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -341,8 +779,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({
+class _IOSShuffleHistoryCard extends StatelessWidget {
+  const _IOSShuffleHistoryCard({
     required this.entry,
     required this.onDelete,
   });
@@ -352,93 +790,161 @@ class _HistoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final timeFormat = DateFormat('h:mm a');
+    final winner = entry.result.isNotEmpty ? entry.result.first : 'None';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFFFFFF),
+            Color(0xFFFBF7F0),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: PremiumDesignTokens.cardBorder),
+        boxShadow: PremiumDesignTokens.cardShadow,
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.shuffle,
-                      size: 16,
-                      color: theme.colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.groupName,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          '${entry.count} ${entry.count == 1 ? 'name' : 'names'} · ${timeFormat.format(entry.shuffledAt)}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    tooltip: 'Delete',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
+                  color: const Color(0xFFEAF1E9),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: PremiumDesignTokens.innerBorder),
                 ),
-                child: Text(
-                  entry.result
-                      .take(3)
-                      .toList()
-                      .asMap()
-                      .entries
-                      .map((e) => '${e.key + 1}. ${e.value}')
-                      .join('\n'),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'monospace',
-                  ),
+                child: const Icon(
+                  Icons.shuffle_rounded,
+                  size: 19,
+                  color: PremiumDesignTokens.forestDark,
                 ),
               ),
-              if (entry.result.length > 3)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    '+${entry.result.length - 3} more',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.groupName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: PremiumDesignTokens.textStrong,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${entry.count} members · ${timeFormat.format(entry.shuffledAt)}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: PremiumDesignTokens.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: onDelete,
+                behavior: HitTestBehavior.opaque,
+                child: const SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Icon(
+                      Icons.delete_outline,
+                      size: 20,
+                      color: PremiumDesignTokens.textMuted,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 12),
+
+          // #1 Winner Pill Banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2EEDC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0x1F1B4332),
+                width: 0.6,
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.emoji_events_rounded,
+                  size: 17,
+                  color: Color(0xFFD69A2D),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  '1st: ',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: PremiumDesignTokens.forestDark,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    winner,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: PremiumDesignTokens.forestDark,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // Subsequent members preview
+          if (entry.result.length > 1) ...[
+            Text(
+              entry.result
+                  .skip(1)
+                  .take(3)
+                  .toList()
+                  .asMap()
+                  .entries
+                  .map((e) => '${e.key + 2}. ${e.value}')
+                  .join('   ·   '),
+              style: const TextStyle(
+                fontSize: 12,
+                color: PremiumDesignTokens.textMuted,
+              ),
+            ),
+            if (entry.result.length > 4) ...[
+              const SizedBox(height: 4),
+              Text(
+                '+${entry.result.length - 4} more members',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: PremiumDesignTokens.forestDark,
+                ),
+              ),
+            ],
+          ],
+        ],
       ),
-    ).animate().fadeIn().slideY(begin: 0.05);
+    );
   }
 }

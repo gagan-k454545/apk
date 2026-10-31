@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import '../../providers/providers.dart';
-import '../../models/models.dart';
+
 import '../../core/services/audio_haptic_service.dart';
+import '../../core/theme/premium_design_tokens.dart';
+import '../../core/widgets/premium/pressable_scale.dart';
+import '../../models/models.dart';
+import '../../providers/providers.dart';
 import 'widgets/coin_3d_widget.dart';
 
+/// Coin Toss Screen following Apple Human Interface Guidelines:
+/// - iOS 3D Coin Stage Card with Level 1 warm peach gradient surface
+/// - Tactile PressableScale (scale 0.97) for primary actions
+/// - 44x44 pt touch targets for all interactive controls
+/// - Clear statistics cards and Inset Grouped history
 class CoinTossScreen extends ConsumerStatefulWidget {
   const CoinTossScreen({super.key});
 
@@ -35,7 +43,6 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
       final v = _animationController.value;
       final settings = ref.read(settingsProvider);
 
-      // Trigger audio & haptics at specific phase milestones
       if (v >= 0.15 && v < 0.17) {
         _audioHapticService.playLaunch(settings);
       } else if (v >= 0.40 && v < 0.42) {
@@ -66,12 +73,12 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
   }
 
   void _startToss() async {
-    if (_isTossing) return; // Prevent double taps
+    if (_isTossing) return;
 
     final settings = ref.read(settingsProvider);
     _audioHapticService.playLaunch(settings);
 
-    // Requirement 4: Predetermine result before animation starts
+    // Compute result before physics animation begins
     final newEntry = await ref.read(coinTossProvider.notifier).tossCoin();
 
     setState(() {
@@ -85,9 +92,9 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final coinTossNotifier = ref.read(coinTossProvider.notifier);
     final history = ref.watch(coinTossProvider);
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     final totalTosses = coinTossNotifier.totalTosses;
     final headsCount = coinTossNotifier.headsCount;
@@ -96,369 +103,573 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
     final tailsPct = coinTossNotifier.tailsPercentage;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Screen Header
-          SliverAppBar.large(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Coin Toss'),
-                Text(
-                  'Let chance make the decision.',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Main Interactive Coin Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-
-                  // 3D Coin Widget
-                  Coin3DWidget(
-                    animationController: _animationController,
-                    isHeadsResult: _lastResult?.isHeads ?? true,
-                    isAnimating: _isTossing,
-                    hasResult: _hasResult,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Status / Result Reveal Text
-                  if (!_isTossing && !_hasResult)
+      backgroundColor: PremiumDesignTokens.bgApp,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // iOS Large Header
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Ready to toss?',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ).animate().fadeIn()
-                  else if (_isTossing)
-                    Text(
-                      'Flipping coin...',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
-                    )
-                  else if (_hasResult && _lastResult != null)
-                    Column(
-                      children: [
-                        Text(
-                          _lastResult!.isHeads ? 'HEADS' : 'TAILS',
-                          style: theme.textTheme.displayMedium?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2.0,
-                            color: _lastResult!.isHeads
-                                ? const Color(0xFFEAB308)
-                                : theme.colorScheme.primary,
-                          ),
-                        )
-                            .animate()
-                            .fadeIn(duration: 300.ms)
-                            .scale(begin: const Offset(0.7, 0.7)),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'Decided by True Randomness',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ).animate().fadeIn(delay: 150.ms),
-                      ],
-                    ),
-
-                  const SizedBox(height: 28),
-
-                  // Toss Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: FilledButton.icon(
-                      onPressed: _isTossing ? null : _startToss,
-                      icon: Icon(
-                        _hasResult ? Icons.refresh_rounded : Icons.monetization_on_outlined,
-                        size: 22,
-                      ),
-                      label: Text(
-                        _isTossing
-                            ? 'FLIPPING...'
-                            : (_hasResult ? 'TOSS AGAIN' : 'TOSS COIN'),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                      'Coin Toss',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                        color: PremiumDesignTokens.textStrong,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-          ),
-
-          // Statistics Section Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-              child: Text(
-                'Toss Statistics',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                    SizedBox(height: 2),
+                    Text(
+                      '3D physics simulation · CSPRNG unbiased 50/50',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: PremiumDesignTokens.textMuted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
 
-          // Statistics Cards Grid
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatTile(
-                          label: 'Total Tosses',
-                          value: '$totalTosses',
-                          icon: Icons.bar_chart_rounded,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatTile(
-                          label: 'Heads',
-                          value: '$headsCount (${headsPct.toStringAsFixed(0)}%)',
-                          icon: Icons.workspace_premium,
-                          color: const Color(0xFFEAB308),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatTile(
-                          label: 'Tails',
-                          value: '$tailsCount (${tailsPct.toStringAsFixed(0)}%)',
-                          icon: Icons.stars_rounded,
-                          color: theme.colorScheme.tertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Today's Tosses Section Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Today\'s Tosses',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (history.isNotEmpty)
-                    TextButton.icon(
-                      onPressed: () => _confirmClearHistory(context),
-                      icon: const Icon(Icons.delete_sweep_outlined, size: 18),
-                      label: const Text('Clear'),
-                    ),
-                ],
-              ),
-            ),
-          ),
-
-          // History List
-          if (history.isEmpty)
+            // Main Interactive Coin Card Stage
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFFFFFFF),
+                        Color(0xFFFCE3D0), // Peach/Gold tint
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: PremiumDesignTokens.cardBorder),
+                    boxShadow: PremiumDesignTokens.cardShadow,
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.monetization_on_outlined,
-                        size: 48,
-                        color: theme.colorScheme.onSurfaceVariant
-                            .withValues(alpha: 0.4),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No Tosses Yet',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      // Eyebrow Chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: PremiumDesignTokens.innerBorder,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x0F1B4332),
+                              blurRadius: 4,
+                              offset: Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.auto_awesome,
+                                size: 13, color: Color(0xFFD69A2D)),
+                            SizedBox(width: 5),
+                            Text(
+                              'FAIR 50/50 DECISION',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: PremiumDesignTokens.forestDark,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap TOSS COIN above to make a decision.',
-                        style: theme.textTheme.bodySmall,
+
+                      const SizedBox(height: 16),
+
+                      // 3D Coin Widget
+                      Coin3DWidget(
+                        animationController: _animationController,
+                        isHeadsResult: _lastResult?.isHeads ?? true,
+                        isAnimating: _isTossing,
+                        hasResult: _hasResult,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Result Status / Reveal
+                      if (!_isTossing && !_hasResult)
+                        const Text(
+                          'Tap Toss to flip',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: PremiumDesignTokens.textStrong,
+                          ),
+                        )
+                      else if (_isTossing)
+                        const Text(
+                          'Flipping in 3D...',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: PremiumDesignTokens.forestDark,
+                          ),
+                        )
+                      else if (_hasResult && _lastResult != null)
+                        Column(
+                          children: [
+                            Text(
+                              _lastResult!.isHeads ? 'HEADS' : 'TAILS',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.0,
+                                color: _lastResult!.isHeads
+                                    ? const Color(0xFFD69A2D)
+                                    : PremiumDesignTokens.forestDark,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: PremiumDesignTokens.innerBorder,
+                                ),
+                              ),
+                              child: const Text(
+                                'Decided by Unbiased CSPRNG',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: PremiumDesignTokens.forestDark,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 22),
+
+                      // Toss Button (Tactile scale, 44+ pt height)
+                      PressableScale(
+                        onTap: _isTossing ? null : _startToss,
+                        child: Container(
+                          width: double.infinity,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            gradient: PremiumDesignTokens.gradPrimary,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x331B4332),
+                                blurRadius: 12,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _hasResult
+                                    ? Icons.refresh_rounded
+                                    : Icons.monetization_on_outlined,
+                                size: 20,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _isTossing
+                                    ? 'FLIPPING...'
+                                    : (_hasResult
+                                        ? 'TOSS AGAIN'
+                                        : 'TOSS COIN'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-            )
-          else
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.builder(
-                itemCount: history.length,
-                itemBuilder: (context, index) {
-                  final entry = history[index];
-                  final timeFormat = DateFormat('h:mm a');
+            ),
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: entry.isHeads
-                              ? const Color(0xFFFEF9C3)
-                              : theme.colorScheme.primaryContainer,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          entry.emoji,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      ),
-                      title: Text(
-                        entry.resultText,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: entry.isHeads
-                              ? const Color(0xFFCA8A04)
-                              : theme.colorScheme.primary,
-                        ),
-                      ),
-                      subtitle: Text(
-                        timeFormat.format(entry.tossedAt),
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        onPressed: () {
-                          ref
-                              .read(coinTossProvider.notifier)
-                              .deleteEntry(entry.id);
-                        },
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: Duration(milliseconds: index * 40));
-                },
+            // Statistics Header
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(24, 24, 20, 10),
+                child: Text(
+                  'STATISTICS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: PremiumDesignTokens.textMuted,
+                    letterSpacing: 0.8,
+                  ),
+                ),
               ),
             ),
 
-          const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
-        ],
+            // Statistics Cards
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _IOSStatCard(
+                        label: 'Total',
+                        value: '$totalTosses',
+                        icon: Icons.bar_chart_rounded,
+                        accentColor: PremiumDesignTokens.forestDark,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _IOSStatCard(
+                        label: 'Heads',
+                        value: '$headsCount (${headsPct.toStringAsFixed(0)}%)',
+                        icon: Icons.monetization_on_rounded,
+                        accentColor: const Color(0xFFD69A2D),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _IOSStatCard(
+                        label: 'Tails',
+                        value: '$tailsCount (${tailsPct.toStringAsFixed(0)}%)',
+                        icon: Icons.shield_rounded,
+                        accentColor: const Color(0xFF456B52),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Today's Tosses Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 20, 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'RECENT TOSSES',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: PremiumDesignTokens.textMuted,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    if (history.isNotEmpty)
+                      GestureDetector(
+                        onTap: () => _confirmClearHistory(context),
+                        behavior: HitTestBehavior.opaque,
+                        child: const SizedBox(
+                          height: 36,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'Clear',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: PremiumDesignTokens.forestDark,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // History List
+            if (history.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'No toss history recorded today',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: PremiumDesignTokens.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                sliver: SliverList.builder(
+                  itemCount: history.take(15).length,
+                  itemBuilder: (context, index) {
+                    final entry = history[index];
+                    final timeFormat = DateFormat('h:mm a');
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border:
+                              Border.all(color: PremiumDesignTokens.cardBorder),
+                          boxShadow: PremiumDesignTokens.cardShadow,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: entry.isHeads
+                                    ? const Color(0xFFFDF7E7)
+                                    : const Color(0xFFEAF1E9),
+                                borderRadius: BorderRadius.circular(9),
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  entry.isHeads
+                                      ? Icons.monetization_on_rounded
+                                      : Icons.shield_rounded,
+                                  size: 18,
+                                  color: entry.isHeads
+                                      ? const Color(0xFFD69A2D)
+                                      : PremiumDesignTokens.forestDark,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    entry.resultText,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: entry.isHeads
+                                          ? const Color(0xFFCA8A04)
+                                          : PremiumDesignTokens.forestDark,
+                                    ),
+                                  ),
+                                  Text(
+                                    timeFormat.format(entry.tossedAt),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: PremiumDesignTokens.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(coinTossProvider.notifier)
+                                    .deleteEntry(entry.id);
+                              },
+                              behavior: HitTestBehavior.opaque,
+                              child: const SizedBox(
+                                width: 44,
+                                height: 44,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 16,
+                                    color: PremiumDesignTokens.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+            // Bottom Nav Clearance
+            SliverPadding(
+              padding: EdgeInsets.only(bottom: 110 + bottomInset),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   void _confirmClearHistory(BuildContext context) {
-    showDialog(
+    HapticFeedback.lightImpact();
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear Coin History?'),
-        content: const Text('This will clear all saved coin toss records.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              ref.read(coinTossProvider.notifier).clearHistory();
-              Navigator.of(context).pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Container(
+        margin: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: PremiumDesignTokens.cardShadow,
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const Text(
+                    'Clear Toss History?',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: PremiumDesignTokens.textStrong,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'This will reset your recorded coin tosses and percentages.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: PremiumDesignTokens.textMuted,
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  PressableScale(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      ref.read(coinTossProvider.notifier).clearHistory();
+                      Navigator.pop(sheetContext);
+                    },
+                    child: Container(
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'Clear History',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFF3B30),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Text('Clear'),
-          ),
-        ],
+            const SizedBox(height: 10),
+            PressableScale(
+              onTap: () => Navigator.pop(sheetContext),
+              child: Container(
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: PremiumDesignTokens.cardShadow,
+                ),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: PremiumDesignTokens.forestDark,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
+class _IOSStatCard extends StatelessWidget {
+  const _IOSStatCard({
     required this.label,
     required this.value,
     required this.icon,
-    required this.color,
+    required this.accentColor,
   });
 
   final String label;
   final String value;
   final IconData icon;
-  final Color color;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: PremiumDesignTokens.cardBorder),
+        boxShadow: PremiumDesignTokens.cardShadow,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: accentColor),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: PremiumDesignTokens.textStrong,
             ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall,
-              maxLines: 1,
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: PremiumDesignTokens.textMuted,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

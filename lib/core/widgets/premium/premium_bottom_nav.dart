@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../theme/premium_design_tokens.dart';
 import 'pressable_scale.dart';
@@ -121,8 +122,6 @@ class PremiumBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    const bgColor = Color(0xF5FFFFFF); // rgba(255,255,255,0.96) near-opaque
-
     return Container(
       margin: EdgeInsets.fromLTRB(
         12,
@@ -131,28 +130,39 @@ class PremiumBottomNav extends StatelessWidget {
         math.max(10.0, bottomInset),
       ),
       height: 64,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: const Color(0x1A1B4332), // rgba(27,67,50,0.10)
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0xCCFFFFFF), // 0 -2px 0 rgba(255,255,255,0.8)
-            offset: Offset(0, -2),
-          ),
-          BoxShadow(
-            color: Color(0x331B4332), // 0 14px 34px rgba(27,67,50,0.20)
-            blurRadius: 34,
-            offset: Offset(0, 14),
-          ),
-        ],
-      ),
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
+          // iOS Liquid Glass Frosted Material Layer
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xEEFFFFFF), // Frosted translucent glass
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color: const Color(0x1A1B4332), // rgba(27,67,50,0.10)
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0xCCFFFFFF), // Specular highlight
+                        offset: Offset(0, -2),
+                      ),
+                      BoxShadow(
+                        color: Color(0x331B4332), // 0 14px 34px rgba(27,67,50,0.20)
+                        blurRadius: 34,
+                        offset: Offset(0, 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
           // Navigation Tab Items with Equal Clearance Around Center FAB
           Row(
             children: [

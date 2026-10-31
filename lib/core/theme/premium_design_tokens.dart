@@ -19,6 +19,7 @@ abstract final class PremiumDesignTokens {
   // ── Brand Greens ──
   static const Color green900 = Color(0xFF14382A);
   static const Color green800 = Color(0xFF1B4332); // primary button, active nav, FAB
+  static const Color forestDark = green800;
   static const Color green700 = Color(0xFF245A43);
   static const Color green600 = Color(0xFF2E6B4E); // "Master" wordmark, "Decide" word
   static const Color green500 = Color(0xFF4F8A6A);

@@ -5,12 +5,14 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <meta name="description" content="Shuffle Master - Randomize anything. Decide instantly.">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#F1E8DA">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Shuffle Master">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
@@ -22,11 +24,27 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
+    /* Mobile Native Feel & iOS Polish */
     html, body {
       background-color: #F1E8DA !important;
       color-scheme: light !important;
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      /* Kill 300ms tap delay */
+      touch-action: manipulation;
+      /* Kill grey/blue tap highlight flash */
+      -webkit-tap-highlight-color: transparent !important;
+      /* Prevent browser pull-to-refresh clash */
+      overscroll-behavior: none;
+      /* Prevent accidental text selection on button long-press */
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
   </style>
 </head>
