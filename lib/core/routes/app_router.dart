@@ -95,8 +95,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/groups')) return 1;
-    if (location.startsWith('/history')) return 2;
-    if (location.startsWith('/settings')) return 3;
+    if (location.startsWith('/coin_toss')) return 2;
+    if (location.startsWith('/history')) return 3;
+    if (location.startsWith('/settings')) return 4;
     return -1;
   }
 
@@ -105,6 +106,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final currentIndex = _getCurrentIndex(context);
 
     return Scaffold(
+      extendBody: true,
       body: child,
       bottomNavigationBar: PremiumBottomNav(
         currentIndex: currentIndex,
@@ -115,8 +117,10 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             case 1:
               context.go('/groups');
             case 2:
-              context.go('/history');
+              context.go('/coin_toss');
             case 3:
+              context.go('/history');
+            case 4:
               context.go('/settings');
           }
         },

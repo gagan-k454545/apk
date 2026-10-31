@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
-import 'shared_icon_tile.dart';
 
-/// Reusable Quick Action tile matching the reference screenshot.
-/// Used for:
-/// - "Shuffle names"
-/// - "Toss Coin"
-/// - "Create Group"
-/// - "View History"
+/// Quick Action Tile matching Section 5.5 of the Master Prompt:
+/// - Radius 20, height ~72, padding 8, column-centered
+/// - 34x34 icon tile (radius 11) with gradient
+/// - 12px label in --text-strong
+/// - 1px borderGlass, shadowSm, tactile scale down (.96)
 class QuickActionTile extends StatelessWidget {
   const QuickActionTile({
     super.key,
     required this.icon,
     required this.label,
     required this.backgroundColor,
-    required this.iconColor,
+    this.backgroundGradient,
+    required this.iconTileGradient,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
   final Color backgroundColor;
-  final Color iconColor;
+  final Gradient? backgroundGradient;
+  final Gradient iconTileGradient;
   final VoidCallback onTap;
 
   @override
@@ -31,44 +32,58 @@ class QuickActionTile extends StatelessWidget {
 
     return PressableScale(
       onTap: onTap,
+      targetScale: 0.96,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        height: 74,
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(18),
+          color: isDark ? const Color(0xFF222E26) : null,
+          gradient: isDark ? null : backgroundGradient,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isDark
-                ? const Color(0xFF354437)
-                : Colors.white.withValues(alpha: 0.8),
+                ? const Color(0xFF334336)
+                : PremiumDesignTokens.borderGlass,
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x05000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
+          boxShadow: PremiumDesignTokens.shadowSm,
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            SharedIconTile(
-              icon: icon,
-              size: 38,
-              iconSize: 20,
-              backgroundColor: isDark
-                  ? const Color(0xFF28342B)
-                  : Colors.white.withValues(alpha: 0.8),
-              iconColor: iconColor,
-              borderRadius: 12,
+            // 34 x 34 Icon Tile
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                gradient: iconTileGradient,
+                borderRadius: BorderRadius.circular(11),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x18000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 1.5),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 18,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            const SizedBox(height: 7),
+            const SizedBox(height: 5),
+
+            // 12px Label
             Text(
               label,
               style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: iconColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? const Color(0xFFEAF1EB)
+                    : PremiumDesignTokens.textStrong,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,

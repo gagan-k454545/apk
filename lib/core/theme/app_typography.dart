@@ -3,8 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 abstract final class AppTypography {
   static TextTheme textTheme(bool isDark) {
-    final Color textColor = isDark ? const Color(0xFFEAEFEA) : const Color(0xFF1A2A20);
-    final Color secondaryTextColor = isDark ? const Color(0xFFA2B0A5) : const Color(0xFF5A6C60);
+    final Color textColor = isDark ? const Color(0xFFEAEFEA) : const Color(0xFF14231C);
+    final Color secondaryTextColor = isDark ? const Color(0xFFA2B0A5) : const Color(0xFF4B5550);
 
     return TextTheme(
       displayLarge: GoogleFonts.plusJakartaSans(
@@ -45,13 +45,13 @@ abstract final class AppTypography {
       ),
       titleLarge: GoogleFonts.plusJakartaSans(
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: -0.2,
         color: textColor,
       ),
       titleMedium: GoogleFonts.plusJakartaSans(
         fontSize: 16,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
         letterSpacing: 0,
         color: textColor,
       ),
@@ -97,6 +97,29 @@ abstract final class AppTypography {
         letterSpacing: 0.4,
         color: secondaryTextColor,
       ),
+    );
+  }
+
+  /// High-contrast editorial display serif strictly for the Hero Headline.
+  /// Section 4.3: Playfair Display 800, tight, letter-spacing -0.5px.
+  static TextStyle heroHeadline({Color? color, double fontSize = 38}) {
+    return GoogleFonts.playfairDisplay(
+      fontSize: fontSize,
+      fontWeight: FontWeight.w800,
+      height: 1.05,
+      letterSpacing: -0.5,
+      color: color,
+    );
+  }
+
+  /// Stat number with tabular figures (Section 4.3).
+  static TextStyle statNumber({Color? color}) {
+    return GoogleFonts.plusJakartaSans(
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      height: 1.2,
+      color: color,
+      fontFeatures: const [FontFeature.tabularFigures()],
     );
   }
 }

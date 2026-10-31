@@ -1,14 +1,15 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
-import 'shared_accent_chip.dart';
-import 'shared_icon_tile.dart';
 
-/// Feature card matching the reference screenshot.
-/// Used for:
-/// - "Name Shuffle" (Sage green with floating name pills + avatars + "Fair & Instant" badge)
-/// - "Coin Toss" (Warm peach with 3D gold coin + crown + "3D Animation" badge)
-class FeatureCard extends StatelessWidget {
+/// Feature card matching Section 5.4 of the Master Prompt:
+/// - Radius 24, padding 14, min-height ~170, 1px borderSoft, shadowMd / shadowPeach
+/// - A) Name Shuffle: gradMintCard, icon 40x40 gradPrimary, arrow button, title, body,
+///      "Fair & Instant" chip, 3 mini tilted name chips (Aarav, Neha, Karan) + orange sparks
+/// - B) Coin Toss: gradPeachCard, icon 40x40 gradOrange, arrow button, title, body,
+///      "3D Animation" chip, 3D gold coin with crown emblem + smaller satellite coins + 3D tilt
+class FeatureCard extends StatefulWidget {
   const FeatureCard({
     super.key,
     required this.title,
@@ -17,9 +18,13 @@ class FeatureCard extends StatelessWidget {
     required this.badgeText,
     required this.badgeIcon,
     required this.backgroundColor,
+    this.backgroundGradient,
     required this.iconBoxColor,
+    this.iconBoxGradient,
+    this.arrowButtonBg,
     this.floatingPills,
     this.hasCoinGraphic = false,
+    this.isPeachCard = false,
     required this.onTap,
   });
 
@@ -29,174 +34,289 @@ class FeatureCard extends StatelessWidget {
   final String badgeText;
   final IconData badgeIcon;
   final Color backgroundColor;
+  final Gradient? backgroundGradient;
   final Color iconBoxColor;
+  final Gradient? iconBoxGradient;
+  final Color? arrowButtonBg;
   final List<String>? floatingPills;
   final bool hasCoinGraphic;
+  final bool isPeachCard;
   final VoidCallback onTap;
+
+  @override
+  State<FeatureCard> createState() => _FeatureCardState();
+}
+
+class _FeatureCardState extends State<FeatureCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _tiltController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tiltController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 3200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _tiltController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    final grad = widget.backgroundGradient ??
+        (widget.isPeachCard
+            ? PremiumDesignTokens.gradPeachCard
+            : PremiumDesignTokens.gradMintCard);
+
+    final shadows = widget.isPeachCard
+        ? PremiumDesignTokens.shadowPeach
+        : PremiumDesignTokens.shadowMd;
+
+    final arrowBg = widget.arrowButtonBg ??
+        (widget.isPeachCard
+            ? PremiumDesignTokens.peach100
+            : PremiumDesignTokens.green100);
 
     return PressableScale(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
-        height: 228,
+        height: 205,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(22),
+          color: isDark ? const Color(0xFF222F26) : null,
+          gradient: isDark ? null : grad,
+          borderRadius: BorderRadius.circular(PremiumDesignTokens.rLg),
           border: Border.all(
             color: isDark
                 ? const Color(0xFF354437)
-                : PremiumDesignTokens.hairline.withValues(alpha: 0.8),
+                : PremiumDesignTokens.borderSoft,
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 10,
-              offset: Offset(0, 3),
-            ),
-          ],
+          boxShadow: shadows,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Row: Icon Squircle + Circular Arrow Button
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                SharedIconTile(
-                  icon: icon,
-                  size: 36,
-                  iconSize: 20,
-                  backgroundColor: iconBoxColor,
-                  borderRadius: 10,
-                ),
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF2E3830)
-                        : Colors.white.withValues(alpha: 0.65),
-                    shape: BoxShape.circle,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(PremiumDesignTokens.rLg),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Row: 40x40 Icon Tile + 28px Arrow Button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: widget.iconBoxGradient == null
+                              ? widget.iconBoxColor
+                              : null,
+                          gradient: widget.iconBoxGradient,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x18000000),
+                              blurRadius: 6,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Icon(
+                            widget.icon,
+                            size: 20,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+
+                      // 28px Circular Arrow Button
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF2E3D31) : arrowBg,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: PremiumDesignTokens.borderSoft,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 14,
+                          color: isDark
+                              ? const Color(0xFFD2E3D6)
+                              : PremiumDesignTokens.textStrong,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 14,
-                    color: isDark
-                        ? const Color(0xFFBACDBF)
-                        : PremiumDesignTokens.textPrimary,
+                  const SizedBox(height: 10),
+
+                  // Title (18/22 700 --text-strong)
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? const Color(0xFFEAF1EB)
+                          : PremiumDesignTokens.textStrong,
+                    ),
                   ),
+                  const SizedBox(height: 4),
+
+                  // Body (12.5/18 400 --text-body)
+                  Text(
+                    widget.description,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.35,
+                      color: isDark
+                          ? const Color(0xFFA2B4A6)
+                          : PremiumDesignTokens.textBody,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Spacer(),
+
+                  // Bottom Pill Chip
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF2E3D30)
+                          : Colors.white.withValues(alpha: 0.75),
+                      borderRadius: BorderRadius.circular(
+                        PremiumDesignTokens.rPill,
+                      ),
+                      border: Border.all(
+                        color: isDark
+                            ? const Color(0xFF3B4F3E)
+                            : PremiumDesignTokens.borderSoft,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          widget.badgeIcon,
+                          size: 12,
+                          color: widget.isPeachCard
+                              ? PremiumDesignTokens.orange500
+                              : PremiumDesignTokens.green600,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.badgeText,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                            color: widget.isPeachCard
+                                ? PremiumDesignTokens.orange500
+                                : PremiumDesignTokens.green600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // Visual Decorative Element on the bottom right:
+              // Floating name chips for Shuffle, 3D Gold Coins for Coin Toss
+              if (widget.floatingPills != null)
+                Positioned(
+                  right: -2,
+                  bottom: 8,
+                  child: _buildShuffleDecor(isDark),
+                )
+              else if (widget.hasCoinGraphic)
+                Positioned(
+                  right: -8,
+                  bottom: -6,
+                  child: reduceMotion
+                      ? _buildCoinGraphicStatic()
+                      : AnimatedBuilder(
+                          animation: _tiltController,
+                          builder: (context, _) => _buildCoinGraphicAnimated(),
+                        ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Title
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 15,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 3),
-
-            // Description
-            Text(
-              description,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 10.5,
-                height: 1.3,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const Spacer(),
-
-            // Visual Graphic Area (Pills + Avatars OR 3D Coin with Floating Coins)
-            if (floatingPills != null)
-              _buildNameShuffleGraphic(isDark)
-            else if (hasCoinGraphic)
-              _buildCoinTossGraphic(),
-
-            const Spacer(),
-
-            // Bottom Badge Pill
-            SharedAccentChip(
-              label: badgeText,
-              icon: badgeIcon,
-              iconColor: iconBoxColor,
-              textColor: iconBoxColor,
-              backgroundColor: isDark
-                  ? const Color(0xFF243026)
-                  : Colors.white.withValues(alpha: 0.75),
-              borderColor: isDark
-                  ? const Color(0xFF334336)
-                  : Colors.white.withValues(alpha: 0.8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildNameShuffleGraphic(bool isDark) {
+  Widget _buildShuffleDecor(bool isDark) {
     return SizedBox(
-      height: 48,
+      width: 78,
+      height: 54,
       child: Stack(
-        alignment: Alignment.centerLeft,
+        clipBehavior: Clip.none,
+        alignment: Alignment.centerRight,
         children: [
-          // Floating small name pills
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildSmallPill('Aarav', isDark),
-                  const SizedBox(width: 4),
-                  _buildSmallPill('Neha', isDark),
-                ],
-              ),
-              const SizedBox(height: 4),
-              _buildSmallPill('Karan', isDark),
-            ],
-          ),
-
-          // Overlapping avatars on the right
+          // Orange spark
           Positioned(
-            right: 0,
-            bottom: 2,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildMiniAvatar(const Color(0xFF8BB59A), 22),
-                Transform.translate(
-                  offset: const Offset(-6, 0),
-                  child: _buildMiniAvatar(const Color(0xFFA5C9B3), 24),
+            top: 2,
+            right: 28,
+            child: Transform.rotate(
+              angle: 0.5,
+              child: Container(
+                width: 6,
+                height: 2.5,
+                decoration: BoxDecoration(
+                  color: PremiumDesignTokens.orange500,
+                  borderRadius: BorderRadius.circular(1.5),
                 ),
-              ],
+              ),
             ),
           ),
 
-          // Sparkle accent
+          // Mini Tilted Chips: Aarav (white), Neha (sage), Karan (cream)
           Positioned(
-            right: 28,
-            top: 2,
-            child: Container(
-              width: 3.5,
-              height: 3.5,
-              decoration: const BoxDecoration(
-                color: Color(0xFFD67E2D),
-                shape: BoxShape.circle,
+            top: 6,
+            right: 8,
+            child: Transform.rotate(
+              angle: -0.15,
+              child: _buildMiniChip('Aarav', Colors.white, isDark),
+            ),
+          ),
+          Positioned(
+            top: 22,
+            right: 0,
+            child: Transform.rotate(
+              angle: 0.12,
+              child: _buildMiniChip(
+                'Neha',
+                PremiumDesignTokens.green100,
+                isDark,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 36,
+            right: 14,
+            child: Transform.rotate(
+              angle: -0.06,
+              child: _buildMiniChip(
+                'Karan',
+                PremiumDesignTokens.peach50,
+                isDark,
               ),
             ),
           ),
@@ -205,135 +325,122 @@ class FeatureCard extends StatelessWidget {
     );
   }
 
-  static Widget _buildSmallPill(String name, bool isDark) {
+  static Widget _buildMiniChip(String label, Color bg, bool isDark) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isDark
-            ? const Color(0xFF28362B)
-            : Colors.white.withValues(alpha: 0.9),
+        color: isDark ? const Color(0xFF28362B) : bg,
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.7),
+          width: 0.8,
+        ),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x10000000),
+            color: Color(0x14000000),
             blurRadius: 4,
             offset: Offset(0, 1.5),
           ),
         ],
       ),
       child: Text(
-        name,
+        label,
         style: TextStyle(
-          fontSize: 9.5,
+          fontSize: 8.5,
           fontWeight: FontWeight.w700,
           color: isDark
               ? const Color(0xFFD5E3D8)
-              : PremiumDesignTokens.textPrimary,
+              : PremiumDesignTokens.textStrong,
         ),
       ),
     );
   }
 
-  static Widget _buildMiniAvatar(Color color, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 1.5),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x14000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Icon(
-        Icons.person_rounded,
-        size: size * 0.6,
-        color: Colors.white,
-      ),
-    );
+  Widget _buildCoinGraphicStatic() {
+    return _buildCoins(0.0);
   }
 
-  Widget _buildCoinTossGraphic() {
+  Widget _buildCoinGraphicAnimated() {
+    final tilt = math.sin(_tiltController.value * math.pi * 2) * 0.15;
+    return _buildCoins(tilt);
+  }
+
+  Widget _buildCoins(double tilt) {
     return SizedBox(
-      height: 50,
+      width: 76,
+      height: 76,
       child: Stack(
-        alignment: Alignment.centerRight,
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
         children: [
-          // Floating background mini coins
+          // Satellite mini coin behind
           Positioned(
-            right: 38,
-            top: 4,
+            right: 32,
+            top: 6,
             child: Transform.rotate(
-              angle: -0.3,
+              angle: -0.3 + tilt,
               child: Container(
-                width: 14,
-                height: 18,
+                width: 18,
+                height: 22,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFFFFDF88), Color(0xFFE89A38)],
+                    colors: [Color(0xFFFCE29A), Color(0xFFD99A22)],
                   ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 4,
-            bottom: 2,
-            child: Transform.rotate(
-              angle: 0.4,
-              child: Container(
-                width: 16,
-                height: 12,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFDF88), Color(0xFFE89A38)],
-                  ),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x25D99A22),
+                      blurRadius: 6,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
 
-          // Main 3D Gold Coin with embossed crown
+          // Main 3D Gold Coin with Crown Emblem
           Positioned(
-            right: 8,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const RadialGradient(
-                  center: Alignment(-0.2, -0.3),
-                  radius: 0.85,
-                  colors: [
-                    Color(0xFFFFE082),
-                    Color(0xFFF9A825),
-                    Color(0xFFE65100),
+            right: 0,
+            bottom: 4,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.002)
+                ..rotateY(tilt),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    center: Alignment(-0.25, -0.25),
+                    radius: 0.85,
+                    colors: [
+                      Color(0xFFFCE29A),
+                      Color(0xFFE9B44C),
+                      Color(0xFFC98A14),
+                    ],
+                    stops: [0.0, 0.55, 1.0],
+                  ),
+                  border: Border.all(
+                    color: const Color(0xFFFFF3C2),
+                    width: 2,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x3DF28C28),
+                      blurRadius: 12,
+                      offset: Offset(0, 5),
+                    ),
                   ],
                 ),
-                border: Border.all(
-                  color: const Color(0xFFFFF3B0),
-                  width: 2,
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x35E65100),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
+                child: const Center(
+                  child: Icon(
+                    Icons.emoji_events_rounded, // crown glyph
+                    color: Color(0xFF8B5A0C),
+                    size: 24,
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.emoji_events_rounded,
-                  color: Color(0xFFFFF9E6),
-                  size: 24,
                 ),
               ),
             ),

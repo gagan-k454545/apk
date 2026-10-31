@@ -1,19 +1,20 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/premium_design_tokens.dart';
 import 'pressable_scale.dart';
 
-/// The tactile center floating shuffle button.
-/// Elevated slightly above the bottom navigation bar, with:
-/// - Dark forest green gradient
-/// - White criss-cross shuffle icon
-/// - Ambient glow shadow
-/// - Tactile scale feedback
-class FloatingCenterAction extends StatelessWidget {
+/// The center tactile Floating Shuffle Button matching Section 5.8:
+/// - 56x56 circle, gradPrimary, white Shuffle icon 26px
+/// - Raised ~18px above the bar
+/// - Outer halo ring (0 0 0 6px rgba(255,252,247,.95)) + shadowLg
+/// - Subtle idle pulse (scale 1.0 to 1.04, 2.4s) with reduced motion fallback
+/// - Tactile scale (.92) on press
+class FloatingCenterAction extends StatefulWidget {
   const FloatingCenterAction({
     super.key,
     required this.onTap,
     this.size = 56.0,
-    this.iconSize = 28.0,
+    this.iconSize = 26.0,
   });
 
   final VoidCallback onTap;
@@ -21,102 +22,148 @@ class FloatingCenterAction extends StatelessWidget {
   final double iconSize;
 
   @override
+  State<FloatingCenterAction> createState() => _FloatingCenterActionState();
+}
+
+class _FloatingCenterActionState extends State<FloatingCenterAction>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return PressableScale(
-      onTap: onTap,
-      targetScale: 0.92,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [
-              Color(0xFF2C553C),
-              Color(0xFF1E3A2B),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    final haloColor = isDark
+        ? const Color(0xFF1A231C)
+        : const Color(0xFFFCFAF6);
+
+    final fab = Container(
+      width: widget.size,
+      height: widget.size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: PremiumDesignTokens.gradPrimary,
+        boxShadow: [
+          // Outer halo ring (0 0 0 6px ...)
+          BoxShadow(
+            color: haloColor,
+            spreadRadius: 5,
           ),
-          border: Border.all(
-            color: const Color(0xFF456B52).withValues(alpha: 0.3),
-            width: 2,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x3D1E3A2B),
-              blurRadius: 16,
-              spreadRadius: 1,
-              offset: Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Icon(
-            Icons.shuffle_rounded,
-            color: Colors.white,
-            size: iconSize,
-          ),
+          ...PremiumDesignTokens.shadowLg,
+        ],
+      ),
+      child: Center(
+        child: Icon(
+          Icons.shuffle_rounded,
+          color: Colors.white,
+          size: widget.iconSize,
         ),
       ),
+    );
+
+    return PressableScale(
+      onTap: widget.onTap,
+      targetScale: 0.92,
+      child: reduceMotion
+          ? fab
+          : AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, child) {
+                final scale = 1.0 + (_pulseController.value * 0.04);
+                return Transform.scale(
+                  scale: scale,
+                  child: child,
+                );
+              },
+              child: fab,
+            ),
     );
   }
 }
 
-/// Custom Premium Bottom Navigation Bar matching the reference screenshots.
-/// Features:
-/// - Ivory / frosted surface with subtle top border and soft shadow
-/// - Selected items have an active forest green pill container
-/// - Inactive items have clean slate typography and icons
-/// - Center cutout slot for the elevated `FloatingCenterAction`
+/// Floating Navigation Bar matching Section 5.8 of the Master Prompt:
+/// - Margin horizontal 12, bottom max(12, safe-area), height ~64, radius 28
+/// - bg rgba(255,252,247,.92), borderGlass, shadowLg
+/// - 6 items plus raised center FAB:
+///   1. Home
+///   2. Groups
+///   3. Alerts (Bell with unread dot)
+///   [Center FAB]
+///   4. Coin Toss
+///   5. History
+///   6. Settings
+/// - Active item = dark green pill (gradPrimary, white icon, 8x16, radius 18) with label in --green-800 bold
 class PremiumBottomNav extends StatelessWidget {
   const PremiumBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTap,
     required this.onCenterTap,
+    this.hasUnreadAlerts = true,
+    this.onAlertsTap,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final VoidCallback onCenterTap;
+  final bool hasUnreadAlerts;
+  final VoidCallback? onAlertsTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     final bgColor = isDark
-        ? const Color(0xFF1A231C)
-        : const Color(0xFFFCFAF6);
-    final borderColor = isDark
-        ? const Color(0xFF2D3C2F)
-        : const Color(0xFFEDE6DA);
+        ? const Color(0xFF1A231C).withValues(alpha: 0.95)
+        : const Color(0xFFFCFAF6).withValues(alpha: 0.95);
 
     return Container(
+      margin: EdgeInsets.fromLTRB(
+        12,
+        0,
+        12,
+        math.max(10.0, bottomInset),
+      ),
+      height: 64,
       decoration: BoxDecoration(
         color: bgColor,
-        border: Border(
-          top: BorderSide(color: borderColor),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF334336)
+              : PremiumDesignTokens.borderGlass,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A000000),
-            blurRadius: 16,
-            offset: Offset(0, -4),
-          ),
-        ],
+        boxShadow: PremiumDesignTokens.shadowLg,
       ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 64,
-          child: Row(
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.center,
+        children: [
+          // 6 Navigation Tab Items
+          Row(
             children: [
-              // 1. Home
+              // 1. Home (index 0)
               Expanded(
-                child: _buildNavItem(
-                  context: context,
+                child: _buildTabItem(
                   index: 0,
                   icon: Icons.home_rounded,
                   unselectedIcon: Icons.home_outlined,
@@ -126,10 +173,9 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // 2. Groups
+              // 2. Groups (index 1)
               Expanded(
-                child: _buildNavItem(
-                  context: context,
+                child: _buildTabItem(
                   index: 1,
                   icon: Icons.groups_rounded,
                   unselectedIcon: Icons.group_outlined,
@@ -139,51 +185,103 @@ class PremiumBottomNav extends StatelessWidget {
                 ),
               ),
 
-              // 3. Center Elevated Action Button
-              SizedBox(
-                width: 68,
-                child: Center(
-                  child: Transform.translate(
-                    offset: const Offset(0, -10),
-                    child: FloatingCenterAction(onTap: onCenterTap),
+              // 3. Alerts (Bell with optional orange dot)
+              Expanded(
+                child: PressableScale(
+                  onTap: () {
+                    if (onAlertsTap != null) {
+                      onAlertsTap!();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('All caught up! No new notifications.'),
+                          duration: Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
+                  targetScale: 0.94,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.notifications_none_rounded,
+                        size: 22,
+                        color: isDark
+                            ? const Color(0xFF8A9C8E)
+                            : PremiumDesignTokens.textMuted,
+                      ),
+                      if (hasUnreadAlerts)
+                        Positioned(
+                          top: 18,
+                          right: 14,
+                          child: Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: PremiumDesignTokens.orange500,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
 
-              // 4. History
+              // Spacer gap for Center Raised FAB
+              const SizedBox(width: 58),
+
+              // 4. Coin Toss (index 2)
               Expanded(
-                child: _buildNavItem(
-                  context: context,
+                child: _buildTabItem(
                   index: 2,
-                  icon: Icons.history_rounded,
-                  unselectedIcon: Icons.history_outlined,
-                  label: 'History',
+                  icon: Icons.monetization_on_rounded,
+                  unselectedIcon: Icons.monetization_on_outlined,
+                  label: 'Coin Toss',
                   isSelected: currentIndex == 2,
                   isDark: isDark,
                 ),
               ),
 
-              // 5. Settings
+              // 5. History (index 3)
               Expanded(
-                child: _buildNavItem(
-                  context: context,
+                child: _buildTabItem(
                   index: 3,
+                  icon: Icons.history_rounded,
+                  unselectedIcon: Icons.history_outlined,
+                  label: 'History',
+                  isSelected: currentIndex == 3,
+                  isDark: isDark,
+                ),
+              ),
+
+              // 6. Settings (index 4)
+              Expanded(
+                child: _buildTabItem(
+                  index: 4,
                   icon: Icons.settings_rounded,
                   unselectedIcon: Icons.settings_outlined,
                   label: 'Settings',
-                  isSelected: currentIndex == 3,
+                  isSelected: currentIndex == 4,
                   isDark: isDark,
                 ),
               ),
             ],
           ),
-        ),
+
+          // Center Raised FAB (-18px above the bar)
+          Positioned(
+            top: -18,
+            child: FloatingCenterAction(onTap: onCenterTap),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildNavItem({
-    required BuildContext context,
+  Widget _buildTabItem({
     required int index,
     required IconData icon,
     required IconData unselectedIcon,
@@ -191,10 +289,9 @@ class PremiumBottomNav extends StatelessWidget {
     required bool isSelected,
     required bool isDark,
   }) {
-    const activeColor = PremiumDesignTokens.mossDark;
     final inactiveColor = isDark
         ? const Color(0xFF8A9C8E)
-        : const Color(0xFF8E9B91);
+        : PremiumDesignTokens.textMuted;
 
     return PressableScale(
       onTap: () => onTap(index),
@@ -203,24 +300,23 @@ class PremiumBottomNav extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          // Active Dark Green Capsule Pill
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(
-              horizontal: isSelected ? 16 : 8,
-              vertical: 4,
+              horizontal: isSelected ? 14 : 6,
+              vertical: 3,
             ),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? (isDark
-                      ? const Color(0xFF2E4634)
-                      : PremiumDesignTokens.mossDark)
-                  : Colors.transparent,
+              gradient: isSelected
+                  ? PremiumDesignTokens.gradPrimary
+                  : null,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
               isSelected ? icon : unselectedIcon,
-              size: 22,
+              size: 20,
               color: isSelected ? Colors.white : inactiveColor,
             ),
           ),
@@ -228,12 +324,16 @@ class PremiumBottomNav extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+              fontSize: 10,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               color: isSelected
-                  ? (isDark ? const Color(0xFFD3E5D6) : activeColor)
+                  ? (isDark
+                      ? const Color(0xFFD3E5D6)
+                      : PremiumDesignTokens.green800)
                   : inactiveColor,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

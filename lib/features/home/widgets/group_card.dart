@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
-/// Reusable Group Card for the "Your Groups" horizontal list on the Home screen.
-/// Matches the reference design with:
-/// - Category icon in tinted squircle
-/// - 3-dots menu icon
-/// - Bold group title
-/// - Member count subtitle
+/// Reusable Group Card matching Section 5.7 of the Master Prompt:
+/// - 116px wide, height ~74, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
+/// - Top-left: 32x32 icon tile (radius 10)
+/// - Top-right: 32px hit area MoreVertical (kebab) button
+/// - Bottom: Group name (14/600) + "12 names" (12/400 muted)
 class GroupCard extends StatelessWidget {
   const GroupCard({
     super.key,
     required this.name,
     required this.memberCount,
     required this.icon,
+    required this.iconTileBg,
     required this.iconColor,
     required this.onTap,
     this.onMenuTap,
@@ -22,6 +22,7 @@ class GroupCard extends StatelessWidget {
   final String name;
   final int memberCount;
   final IconData icon;
+  final Color iconTileBg;
   final Color iconColor;
   final VoidCallback onTap;
   final VoidCallback? onMenuTap;
@@ -33,75 +34,144 @@ class GroupCard extends StatelessWidget {
 
     return PressableScale(
       onTap: onTap,
+      targetScale: 0.96,
       child: Container(
-        width: 140,
-        padding: const EdgeInsets.all(12),
+        width: 120,
+        height: 78,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF222B24) : PremiumDesignTokens.surface,
+          color: isDark ? const Color(0xFF1E2820) : PremiumDesignTokens.surfaceSoft,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: isDark
-                ? const Color(0xFF334337)
-                : PremiumDesignTokens.hairline,
+                ? const Color(0xFF334336)
+                : PremiumDesignTokens.borderSoft,
           ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x06000000),
-              blurRadius: 8,
-              offset: Offset(0, 2),
-            ),
-          ],
+          boxShadow: PremiumDesignTokens.shadowSm,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top Row: Category Icon + 3-dots Menu
+            // Top Row: 32x32 Icon Tile + Kebab Menu (32px touch target)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.14),
+                    color: iconTileBg,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 16,
-                    color: iconColor,
+                  child: Center(
+                    child: Icon(
+                      icon,
+                      size: 16,
+                      color: iconColor,
+                    ),
                   ),
                 ),
                 GestureDetector(
                   onTap: onMenuTap,
-                  child: Icon(
-                    Icons.more_vert_rounded,
-                    size: 16,
-                    color: theme.colorScheme.onSurfaceVariant
-                        .withValues(alpha: 0.5),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: Center(
+                      child: Icon(
+                        Icons.more_vert_rounded,
+                        size: 16,
+                        color: isDark
+                            ? const Color(0xFFA2B4A6)
+                            : PremiumDesignTokens.textMuted,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-            const Spacer(),
 
-            // Group Name
-            Text(
-              name,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 13.5,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            // Bottom Labels: Group Name + Member Count
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? const Color(0xFFEAF1EB)
+                        : PremiumDesignTokens.textStrong,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  '$memberCount names',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                    color: isDark
+                        ? const Color(0xFFA2B4A6)
+                        : PremiumDesignTokens.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-            // Member Count
+/// Empty state dashed card shown when zero groups exist
+class EmptyGroupCard extends StatelessWidget {
+  const EmptyGroupCard({super.key, required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return PressableScale(
+      onTap: onTap,
+      targetScale: 0.96,
+      child: Container(
+        width: 120,
+        height: 78,
+        decoration: BoxDecoration(
+          color: isDark
+              ? const Color(0xFF1E2820).withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: PremiumDesignTokens.green600.withValues(alpha: 0.4),
+            width: 1.2,
+          ),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_circle_outline_rounded,
+              size: 22,
+              color: PremiumDesignTokens.green600,
+            ),
+            SizedBox(height: 4),
             Text(
-              '$memberCount names',
-              style: theme.textTheme.bodySmall?.copyWith(
+              '+ New Group',
+              style: TextStyle(
                 fontSize: 11,
-                color: theme.colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                color: PremiumDesignTokens.green600,
               ),
             ),
           ],
