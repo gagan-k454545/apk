@@ -58,28 +58,9 @@ class HomeScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #F1E8DA
+      backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #E4DACA
       body: Stack(
         children: [
-          // Single very faint mint radial at top-left (opacity <= 0.35, Section 1)
-          Positioned(
-            top: -60,
-            left: -40,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFDCEBD8).withValues(alpha: 0.32),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           // Single Scroll Column
           SafeArea(
             bottom: false,
@@ -145,7 +126,7 @@ class HomeScreen extends ConsumerWidget {
                               },
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
 
                           // Card B: Coin Toss
                           Expanded(
@@ -326,7 +307,7 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           const Text(
                             'Your Groups',
                             style: TextStyle(
@@ -378,7 +359,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     SizedBox(
-                      height: 100,
+                      height: 122,
                       child: groups.isEmpty
                           ? Padding(
                               padding:
@@ -389,12 +370,13 @@ class HomeScreen extends ConsumerWidget {
                             )
                           : ListView.separated(
                               padding:
-                                  const EdgeInsets.symmetric(horizontal: 16),
+                                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              clipBehavior: Clip.none,
                               scrollDirection: Axis.horizontal,
                               physics: const BouncingScrollPhysics(),
                               itemCount: groups.length.clamp(0, 8),
                               separatorBuilder: (_, __) =>
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: 12),
                               itemBuilder: (context, index) {
                                 final g = groups[index];
                                 final icon = _getGroupIcon(g.name);
@@ -426,19 +408,19 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
 
-          // Bottom Fade above Nav (transparent to #F1E8DA, 40px)
+          // Small bottom fade strictly behind bottom nav (transparent to #E4DACA, 20px)
           Positioned(
             left: 0,
             right: 0,
             bottom: 64.0 + math.max(10.0, bottomInset),
-            height: 40,
+            height: 20,
             child: IgnorePointer(
               child: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0x00F1E8DA),
-                      Color(0xFFF1E8DA),
+                      Color(0x00E4DACA),
+                      Color(0xFFE4DACA),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,

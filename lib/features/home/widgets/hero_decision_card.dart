@@ -57,32 +57,15 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
         borderRadius: BorderRadius.circular(PremiumDesignTokens.rXl),
         border: Border.all(
           color: PremiumDesignTokens.cardBorder,
+          width: PremiumDesignTokens.cardBorderWidth,
         ),
         boxShadow: PremiumDesignTokens.cardShadow,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(PremiumDesignTokens.rXl),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Soft mint decorative circle (60% opacity, no grey, no blur filter)
-            Positioned(
-              top: -24,
-              right: 12,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0x99DCEBD8), // #DCEBD8 at 60% opacity
-                ),
-              ),
-            ),
-
-            // Main Content Layout
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Left Content Column (~54%)
@@ -259,9 +242,7 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }

@@ -36,14 +36,15 @@ class GroupCard extends StatelessWidget {
       onTap: onTap,
       targetScale: 0.96,
       child: Container(
-        width: 124,
-        height: 94,
+        width: 126,
+        height: 104,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           gradient: PremiumDesignTokens.gradNeutralCard,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: PremiumDesignTokens.cardBorder,
+            width: PremiumDesignTokens.cardBorderWidth,
           ),
           boxShadow: PremiumDesignTokens.cardShadow,
         ),
@@ -101,17 +102,19 @@ class GroupCard extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    height: 1.2,
                     color: PremiumDesignTokens.textStrong,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: 2),
                 Text(
                   '$memberCount names',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w400,
+                    height: 1.2,
                     color: PremiumDesignTokens.textMuted,
                   ),
                   maxLines: 1,
@@ -138,14 +141,14 @@ class EmptyGroupCard extends StatelessWidget {
       onTap: onTap,
       targetScale: 0.96,
       child: Container(
-        width: 124,
-        height: 94,
+        width: 126,
+        height: 104,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.9),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: PremiumDesignTokens.green600.withValues(alpha: 0.5),
-            width: 1.2,
+            color: PremiumDesignTokens.cardBorder,
+            width: PremiumDesignTokens.cardBorderWidth,
           ),
           boxShadow: PremiumDesignTokens.cardShadow,
         ),

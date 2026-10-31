@@ -39,6 +39,7 @@ class StatsStrip extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
           color: PremiumDesignTokens.cardBorder,
+          width: PremiumDesignTokens.cardBorderWidth,
         ),
         boxShadow: PremiumDesignTokens.cardShadow,
       ),

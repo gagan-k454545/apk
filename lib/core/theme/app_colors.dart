@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 abstract final class AppColors {
   // ── Reference Palette Tokens (Cream & Forest/Sage/Gold/Peach) ──
-  static const Color creamBase = Color(0xFFF1E8DA); // warm sand page background
+  static const Color creamBase = Color(0xFFE4DACA); // warm sand page background
   static const Color creamCard = Color(0xFFFFFFFF);
   static const Color creamCardAlt = Color(0xFFFBF7F0);
   static const Color creamPedestal = Color(0xFFEADBCA);
@@ -54,7 +54,7 @@ abstract final class AppColors {
   static const Color lightErrorContainer = Color(0xFFFDEDED);
   static const Color lightOnErrorContainer = Color(0xFF5F2120);
 
-  static const Color lightSurface = Color(0xFFF1E8DA); // warm sand page background
+  static const Color lightSurface = Color(0xFFE4DACA); // warm sand page background
   static const Color lightOnSurface = Color(0xFF14231C); // dark organic spruce
   static const Color lightSurfaceVariant = Color(0xFFF5EFE6); // Warm Beige
   static const Color lightOnSurfaceVariant = Color(0xFF5A6C60);

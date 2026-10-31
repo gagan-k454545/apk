@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../theme/premium_design_tokens.dart';
 import 'pressable_scale.dart';
@@ -134,32 +133,27 @@ class PremiumBottomNav extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // iOS Liquid Glass Frosted Material Layer
+          // Solid White Floating Pill (Level 1 surface)
           Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xEEFFFFFF), // Frosted translucent glass
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: const Color(0x1A1B4332), // rgba(27,67,50,0.10)
-                    ),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0xCCFFFFFF), // Specular highlight
-                        offset: Offset(0, -2),
-                      ),
-                      BoxShadow(
-                        color: Color(0x331B4332), // 0 14px 34px rgba(27,67,50,0.20)
-                        blurRadius: 34,
-                        offset: Offset(0, 14),
-                      ),
-                    ],
-                  ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFFFF), // Solid #FFFFFF (no translucency, no blur)
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: const Color(0x241B4332), // 1.5px solid rgba(27,67,50,0.14)
+                  width: 1.5,
                 ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0xCCFFFFFF), // Specular highlight
+                    offset: Offset(0, -2),
+                  ),
+                  BoxShadow(
+                    color: Color(0x401B4332), // 0 16px 36px rgba(27,67,50,0.25)
+                    blurRadius: 36,
+                    offset: Offset(0, 16),
+                  ),
+                ],
               ),
             ),
           ),
@@ -292,7 +286,7 @@ class PremiumBottomNav extends StatelessWidget {
     required String label,
     required bool isSelected,
   }) {
-    const inactiveColor = PremiumDesignTokens.textMuted;
+    const inactiveColor = Color(0xFF6B7C72); // Inactive items: icon + label both in #6B7C72
 
     return PressableScale(
       onTap: () => onTap(index),

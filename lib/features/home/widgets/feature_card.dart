@@ -75,11 +75,11 @@ class _FeatureCardState extends State<FeatureCard>
             ? PremiumDesignTokens.gradPeachCard
             : PremiumDesignTokens.gradMintCard);
 
-    // Solid tinted fill for arrow circle button (Section 3)
+    // Solid tinted fill for arrow circle button (mint #CFE3C8 / peach #F6C9AB)
     final arrowBg = widget.arrowButtonBg ??
         (widget.isPeachCard
-            ? const Color(0xFFF9D3BA) // peach #F9D3BA
-            : const Color(0xFFD5E6D0)); // mint #D5E6D0
+            ? PremiumDesignTokens.peachArrowFill
+            : PremiumDesignTokens.mintArrowFill);
 
     return PressableScale(
       onTap: widget.onTap,
@@ -91,6 +91,7 @@ class _FeatureCardState extends State<FeatureCard>
           borderRadius: BorderRadius.circular(PremiumDesignTokens.rLg),
           border: Border.all(
             color: PremiumDesignTokens.cardBorder,
+            width: PremiumDesignTokens.cardBorderWidth,
           ),
           boxShadow: PremiumDesignTokens.cardShadow,
         ),
