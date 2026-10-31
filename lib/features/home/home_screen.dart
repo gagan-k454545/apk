@@ -418,7 +418,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     SizedBox(
-                      height: 82,
+                      height: 100,
                       child: groups.isEmpty
                           ? Padding(
                               padding:

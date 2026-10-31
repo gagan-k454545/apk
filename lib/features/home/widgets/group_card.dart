@@ -3,9 +3,10 @@ import '../../../core/theme/premium_design_tokens.dart';
 import '../../../core/widgets/premium/pressable_scale.dart';
 
 /// Reusable Group Card matching Section 5.7 of the Master Prompt (Strictly Light Theme):
-/// - 120px wide, height ~78, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
-/// - Top-left: 32x32 icon tile (radius 10)
-/// - Top-right: 32px hit area MoreVertical (kebab) button
+/// - 124px wide, height 94px, radius 18, bg --surface-soft, 1px borderSoft, shadowSm
+/// - Top-left: 30x30 icon tile (radius 10)
+/// - Top-right: MoreVertical (kebab) button
+/// - Spacer for adaptive vertical breathing room (prevents font scaling overflow)
 /// - Bottom: Group name (13/600) + "12 names" (11/400 muted)
 class GroupCard extends StatelessWidget {
   const GroupCard({
@@ -33,9 +34,9 @@ class GroupCard extends StatelessWidget {
       onTap: onTap,
       targetScale: 0.96,
       child: Container(
-        width: 120,
-        height: 78,
-        padding: const EdgeInsets.all(10),
+        width: 124,
+        height: 94,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: PremiumDesignTokens.surfaceSoft,
           borderRadius: BorderRadius.circular(18),
@@ -46,15 +47,14 @@ class GroupCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top Row: 32x32 Icon Tile + Kebab Menu (32px touch target)
+            // Top Row: 30x30 Icon Tile + Kebab Menu
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: iconTileBg,
                     borderRadius: BorderRadius.circular(10),
@@ -71,8 +71,8 @@ class GroupCard extends StatelessWidget {
                   onTap: onMenuTap,
                   behavior: HitTestBehavior.opaque,
                   child: const SizedBox(
-                    width: 32,
-                    height: 32,
+                    width: 28,
+                    height: 28,
                     child: Center(
                       child: Icon(
                         Icons.more_vert_rounded,
@@ -84,6 +84,7 @@ class GroupCard extends StatelessWidget {
                 ),
               ],
             ),
+            const Spacer(),
 
             // Bottom Labels: Group Name + Member Count
             Column(
@@ -100,6 +101,7 @@ class GroupCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 1),
                 Text(
                   '$memberCount names',
                   style: const TextStyle(
@@ -131,8 +133,8 @@ class EmptyGroupCard extends StatelessWidget {
       onTap: onTap,
       targetScale: 0.96,
       child: Container(
-        width: 120,
-        height: 78,
+        width: 124,
+        height: 94,
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(18),
