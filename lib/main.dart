@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +14,13 @@ void main() async {
     FlutterError.presentError(details);
   };
 
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FlutterError.presentError(
+      FlutterErrorDetails(exception: error, stack: stack),
+    );
+    return true;
+  };
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -26,17 +33,11 @@ void main() async {
     debugPrint('Database initialization error: $e\n$stack');
   }
 
-  runZonedGuarded(() {
-    runApp(
-      const ProviderScope(
-        child: ShuffleMasterApp(),
-      ),
-    );
-  }, (error, stack) {
-    FlutterError.presentError(
-      FlutterErrorDetails(exception: error, stack: stack),
-    );
-  });
+  runApp(
+    const ProviderScope(
+      child: ShuffleMasterApp(),
+    ),
+  );
 }
 
 class ShuffleMasterApp extends ConsumerWidget {

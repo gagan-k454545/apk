@@ -9,6 +9,7 @@ import '../../features/shuffle/shuffle_screen.dart';
 import '../../features/coin_toss/coin_toss_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../providers/providers.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -84,7 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class ScaffoldWithNavBar extends StatelessWidget {
+class ScaffoldWithNavBar extends ConsumerWidget {
   const ScaffoldWithNavBar({super.key, required this.child});
 
   final Widget child;
@@ -100,11 +101,27 @@ class ScaffoldWithNavBar extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = _getCurrentIndex(context);
 
     return Scaffold(
       body: child,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          final groups = ref.read(groupsProvider);
+          if (groups.isNotEmpty) {
+            context.push('/shuffle/${groups.first.id}');
+          } else {
+            context.push('/shuffle/cricket-6');
+          }
+        },
+        backgroundColor: const Color(0xFF1E3A2B),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.shuffle_rounded, size: 26),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {

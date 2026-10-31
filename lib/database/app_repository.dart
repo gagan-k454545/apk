@@ -17,6 +17,79 @@ class AppRepository {
     _historyBox = await Hive.openBox(AppConstants.historyBox);
     _coinTossBox = await Hive.openBox(AppConstants.coinTossBox);
     _settingsBox = await Hive.openBox(AppConstants.settingsBox);
+    if (_groupsBox.isEmpty) {
+      final defaultGroups = [
+        Group(
+          id: 'cricket-6',
+          name: 'Cricket 6',
+          members: [
+            NameEntry(name: 'Aarav Sharma', isFavorite: true),
+            NameEntry(name: 'Priya Patel'),
+            NameEntry(name: 'Rahul Verma'),
+            NameEntry(name: 'Neha Singh'),
+            NameEntry(name: 'Karan Malhotra'),
+            NameEntry(name: 'Vikram Joshi'),
+            NameEntry(name: 'Rohan Gupta'),
+          ],
+        ),
+        Group(
+          id: 'classmates',
+          name: 'Classmates',
+          members: [
+            NameEntry(name: 'Aarav'),
+            NameEntry(name: 'Priya'),
+            NameEntry(name: 'Rahul'),
+            NameEntry(name: 'Neha'),
+            NameEntry(name: 'Karan'),
+            NameEntry(name: 'Vikram'),
+            NameEntry(name: 'Rohan'),
+            NameEntry(name: 'Ananya'),
+            NameEntry(name: 'Kabir'),
+            NameEntry(name: 'Ishaan'),
+            NameEntry(name: 'Meera'),
+            NameEntry(name: 'Arjun'),
+          ],
+        ),
+        Group(
+          id: 'project-team',
+          name: 'Project Team',
+          members: [
+            NameEntry(name: 'Alex'),
+            NameEntry(name: 'Sarah'),
+            NameEntry(name: 'David'),
+            NameEntry(name: 'Maya'),
+            NameEntry(name: 'James'),
+            NameEntry(name: 'Elena'),
+            NameEntry(name: 'Chris'),
+            NameEntry(name: 'Lisa'),
+          ],
+        ),
+        Group(
+          id: 'game-night',
+          name: 'Game Night',
+          members: [
+            NameEntry(name: 'Sam'),
+            NameEntry(name: 'Jordan'),
+            NameEntry(name: 'Taylor'),
+            NameEntry(name: 'Morgan'),
+            NameEntry(name: 'Casey'),
+            NameEntry(name: 'Riley'),
+            NameEntry(name: 'Avery'),
+            NameEntry(name: 'Quinn'),
+            NameEntry(name: 'Dakota'),
+            NameEntry(name: 'Reese'),
+            NameEntry(name: 'Hayden'),
+            NameEntry(name: 'Skyler'),
+            NameEntry(name: 'Rowan'),
+            NameEntry(name: 'Finley'),
+            NameEntry(name: 'Emerson'),
+          ],
+        ),
+      ];
+      for (final g in defaultGroups) {
+        await _groupsBox.put(g.id, g.toMap());
+      }
+    }
   }
 
   // ── Groups ──
