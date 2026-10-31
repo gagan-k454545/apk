@@ -2,16 +2,19 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/shuffle/coin_toss_engine.dart';
 
-/// Premium 3D Gold Coin Toss Widget:
-/// - 150px size
-/// - Rich radial gold gradient: #FCE29A, #E9B44C 55%, #C98A14
-/// - Milled rim ticks & inner raised ring
-/// - Crown emblem on Heads, Ringed Star on Tails, Standing Rim on No Result
-/// - 3D disc stacked edge depth (translateZ -6px..+6px)
-/// - Moving metallic specular shine sweep
-/// - Full physics-feel animation (anticipation dip, launch, apex scale 1.25,
-///   fall, land squash, damped bounces, settling on exact parity: 0° Heads, 180° Tails, 90° No Result)
-/// - Synchronized dynamic shadow & landing sparks flourish
+/// Super Realistic 3D Gold Coin Toss Widget:
+/// - True dual-sided 3D disc model (Heads at +Z front, Tails at -Z back, 13-layer cylindrical rim).
+/// - 3D Perspective tumble (rotX flip + rotY gyroscopic wobble + rotZ angular drift).
+/// - Kinematic gravity trajectory:
+///   1. Thumb flick anticipation dip & squash (0.00..0.05)
+///   2. Explosive parabolic ascent + 3D camera zoom (0.05..0.46)
+///   3. Slow-motion apex float & specular metallic glint (0.46..0.54)
+///   4. Gravitational freefall acceleration (0.54..0.76)
+///   5. Sharp surface impact & elastic squash (0.76..0.80)
+///   6. 3-stage damped restitution bounces & wobble settling (0.80..1.00)
+/// - Exact landing parity: 0° Heads, 180° Tails, 90° No Result (balanced on milled rim).
+/// - Dynamic contact ground shadow synchronized with altitude & landing footprint.
+/// - Flourish landing burst sparks.
 class Coin3DWidget extends StatelessWidget {
   const Coin3DWidget({
     super.key,
@@ -42,57 +45,69 @@ class Coin3DWidget extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // 1. Soft Ground Shadow under the coin
+            // 1. Super Realistic Dynamic Ground Shadow
             AnimatedBuilder(
               animation: animationController,
               builder: (context, child) {
                 final double v = animationController.value;
-
-                double shadowScale = 1.0;
-                double shadowOpacity = 0.35;
-                double shadowBlur = 16.0;
-
                 final isEdgeLanded = hasResult && plan.isNoResult;
 
+                double translateY = 0.0;
                 if (isTossing && !reduceMotion) {
                   if (v <= 0.05) {
                     final p = v / 0.05;
-                    shadowScale = 1.0 + (p * 0.1);
-                    shadowOpacity = 0.35 + (p * 0.1);
-                    shadowBlur = 16.0 - (p * 4.0);
-                  } else if (v <= 0.45) {
-                    final p = (v - 0.05) / 0.40;
-                    final curveP = const Cubic(0.2, 0.7, 0.3, 1.0).transform(p);
-                    shadowScale = 1.1 - (curveP * 0.55);
-                    shadowOpacity = 0.45 - (curveP * 0.27);
-                    shadowBlur = 12.0 + (curveP * 26.0);
-                  } else if (v <= 0.78) {
-                    final p = (v - 0.45) / 0.33;
-                    final curveP = const Cubic(0.5, 0.0, 0.9, 0.5).transform(p);
-                    shadowScale = 0.55 + (curveP * 0.45);
-                    shadowOpacity = 0.18 + (curveP * 0.17);
-                    shadowBlur = 38.0 - (curveP * 22.0);
+                    translateY = math.sin(p * math.pi) * 8.0;
+                  } else if (v <= 0.46) {
+                    final p = (v - 0.05) / 0.41;
+                    final curveP =
+                        const Cubic(0.20, 0.85, 0.35, 1.0).transform(p);
+                    translateY = -(curveP * plan.height);
+                  } else if (v <= 0.54) {
+                    translateY = -plan.height;
+                  } else if (v <= 0.76) {
+                    final p = (v - 0.54) / 0.22;
+                    final curveP =
+                        const Cubic(0.55, 0.08, 0.9, 0.65).transform(p);
+                    translateY = -plan.height * (1.0 - curveP);
+                  } else if (v <= 0.80) {
+                    translateY = 0.0;
                   } else {
-                    shadowScale = 1.0;
-                    shadowOpacity = 0.35;
-                    shadowBlur = 16.0;
+                    final p = (v - 0.80) / 0.20;
+                    double h = 0.0;
+                    if (p < 0.45) {
+                      h = math.sin((p / 0.45) * math.pi) * 26.0;
+                    } else if (p < 0.78) {
+                      h = math.sin(((p - 0.45) / 0.33) * math.pi) * 11.0;
+                    } else {
+                      h = math.sin(((p - 0.78) / 0.22) * math.pi) * 3.5;
+                    }
+                    translateY = -h;
                   }
                 }
 
-                // If standing on edge (No Result), shadow is narrow directly under the rim
-                final baseWidth = isEdgeLanded ? 48.0 : 135.0;
-                final baseHeight = isEdgeLanded ? 14.0 : 20.0;
+                // Altitude ratio: 0.0 (ground) to 1.0 (apex)
+                final altitude =
+                    (-translateY / (plan.height > 0 ? plan.height : 180.0))
+                        .clamp(0.0, 1.0);
+
+                final baseWidth = isEdgeLanded ? 42.0 : 130.0;
+                final baseHeight = isEdgeLanded ? 12.0 : 18.0;
+
+                final shadowWidth = baseWidth * (1.0 + altitude * 0.45);
+                final shadowHeight = baseHeight * (1.0 + altitude * 0.50);
+                final shadowOpacity = (0.45 * (1.0 - altitude * 0.72)).clamp(0.08, 0.48);
+                final shadowBlur = 8.0 + (altitude * 32.0);
 
                 return Positioned(
                   bottom: 22,
                   child: Container(
-                    width: baseWidth * shadowScale,
-                    height: baseHeight * shadowScale,
+                    width: shadowWidth,
+                    height: shadowHeight,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(100),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF2A1F08)
+                          color: const Color(0xFF2A1C06)
                               .withValues(alpha: shadowOpacity),
                           blurRadius: shadowBlur,
                           spreadRadius: 2,
@@ -110,23 +125,22 @@ class Coin3DWidget extends StatelessWidget {
                 animation: animationController,
                 builder: (context, child) {
                   final v = animationController.value;
-                  if (v < 0.78) return const SizedBox.shrink();
-                  final p = (v - 0.78) / 0.22;
+                  if (v < 0.76) return const SizedBox.shrink();
+                  final p = (v - 0.76) / 0.24;
                   return CustomPaint(
-                    size: const Size(260, 260),
+                    size: const Size(270, 270),
                     painter: _CoinSparksPainter(progress: p),
                   );
                 },
               ),
 
-            // 3. 3D Animated Gold Coin
+            // 3. Super Realistic 3D Animated Gold Coin
             AnimatedBuilder(
               animation: animationController,
               builder: (context, child) {
                 final double v = animationController.value;
 
                 if (reduceMotion) {
-                  // Reduced motion fallback: crossfade flip
                   final currentFace = isTossing
                       ? (v > 0.5 ? plan.result : plan.startFace)
                       : (hasResult ? plan.result : plan.startFace);
@@ -150,82 +164,90 @@ class Coin3DWidget extends StatelessWidget {
                 } else if (!isTossing && hasResult) {
                   rotXDeg = plan.endAngleDeg;
                 } else {
-                  // Active Toss Physics Timeline
+                  // Active Cinematic Toss Physics Timeline
                   final totalTurnsDeg = plan.totalTurnsDeg > 0
                       ? plan.totalTurnsDeg
                       : (plan.halfTurns * 180.0);
 
                   if (v <= 0.05) {
+                    // Phase 0: Anticipation compression dip
                     final p = v / 0.05;
-                    translateY = p * 6.0;
-                    scaleY = 1.0 - (p * 0.04);
-                    scaleX = 1.0 + (p * 0.02);
+                    translateY = math.sin(p * math.pi) * 8.0;
+                    scaleY = 1.0 - math.sin(p * math.pi) * 0.06;
+                    scaleX = 1.0 + math.sin(p * math.pi) * 0.03;
                     rotXDeg = plan.startAngleDeg;
-                  } else if (v <= 0.45) {
-                    final p = (v - 0.05) / 0.40;
+                  } else if (v <= 0.46) {
+                    // Phase 1: Explosive Ascent & 3D Fast Spin
+                    final p = (v - 0.05) / 0.41;
                     final curveP =
-                        const Cubic(0.2, 0.7, 0.3, 1.0).transform(p);
-                    translateY = 6.0 - (curveP * (plan.height + 6.0));
+                        const Cubic(0.20, 0.85, 0.35, 1.0).transform(p);
+                    translateY = -(curveP * plan.height);
                     rotXDeg =
-                        plan.startAngleDeg + (curveP * totalTurnsDeg * 0.55);
-                    rotYDeg = plan.tiltY * math.sin(p * math.pi);
-                    rotZDeg = plan.driftZ * math.sin(p * math.pi);
-                    final scaleElev =
-                        1.0 + (math.sin(p * math.pi * 0.5) * 0.25);
-                    scaleX = scaleElev;
-                    scaleY = scaleElev;
-                  } else if (v <= 0.78) {
-                    final p = (v - 0.45) / 0.33;
-                    final curveP =
-                        const Cubic(0.5, 0.0, 0.9, 0.5).transform(p);
-                    translateY = -plan.height + (curveP * plan.height);
+                        plan.startAngleDeg + (curveP * totalTurnsDeg * 0.52);
+                    rotYDeg = plan.tiltY * math.sin(p * math.pi * 2.5);
+                    rotZDeg = plan.driftZ * math.sin(p * math.pi * 2.0);
+                    final zoom = 1.0 + math.sin(p * math.pi * 0.5) * 0.28;
+                    scaleX = zoom;
+                    scaleY = zoom;
+                  } else if (v <= 0.54) {
+                    // Phase 2: Apex Slow-Motion Float & Specular Gleam
+                    final p = (v - 0.46) / 0.08;
+                    translateY = -plan.height + math.sin(p * math.pi) * 2.5;
                     rotXDeg = plan.startAngleDeg +
-                        (totalTurnsDeg * 0.55) +
-                        (curveP * totalTurnsDeg * 0.45);
-                    rotYDeg = plan.tiltY * (1.0 - curveP);
-                    rotZDeg = plan.driftZ * (1.0 - curveP);
-                    final scaleElev = 1.25 - (curveP * 0.25);
-                    scaleX = scaleElev;
-                    scaleY = scaleElev;
-                  } else if (v <= 0.82) {
-                    final p = (v - 0.78) / 0.04;
+                        (totalTurnsDeg * 0.52) +
+                        (p * totalTurnsDeg * 0.08);
+                    rotYDeg = plan.tiltY * math.cos(p * math.pi);
+                    rotZDeg = plan.driftZ * math.cos(p * math.pi);
+                    scaleX = 1.28;
+                    scaleY = 1.28;
+                  } else if (v <= 0.76) {
+                    // Phase 3: Gravitational Freefall
+                    final p = (v - 0.54) / 0.22;
+                    final curveP =
+                        const Cubic(0.55, 0.08, 0.9, 0.65).transform(p);
+                    translateY = -plan.height * (1.0 - curveP);
+                    rotXDeg = plan.startAngleDeg +
+                        (totalTurnsDeg * 0.60) +
+                        (curveP * totalTurnsDeg * 0.40);
+                    rotYDeg = plan.tiltY * (1.0 - curveP) * 0.25;
+                    rotZDeg = plan.driftZ * (1.0 - curveP) * 0.25;
+                    final zoom = 1.28 - (curveP * 0.28);
+                    scaleX = zoom;
+                    scaleY = zoom;
+                  } else if (v <= 0.80) {
+                    // Phase 4: Ground Impact & Elastic Squash
+                    final p = (v - 0.76) / 0.04;
                     translateY = 0.0;
                     rotXDeg = plan.endAngleDeg;
-                    scaleY = 1.0 - (math.sin(p * math.pi) * 0.06);
-                    scaleX = 1.0 + (math.sin(p * math.pi) * 0.04);
+                    scaleY = 1.0 - (math.sin(p * math.pi) * 0.10);
+                    scaleX = 1.0 + (math.sin(p * math.pi) * 0.06);
                   } else {
-                    final p = (v - 0.82) / 0.18;
-                    double bounceHeight = 0.0;
-                    double wobbleDeg = 0.0;
+                    // Phase 5: 3-Stage Damped Restitution Bounces
+                    final p = (v - 0.80) / 0.20;
+                    double bounceH = 0.0;
+                    double wobbleX = 0.0;
+                    double wobbleY = 0.0;
 
-                    if (plan.bounces >= 3) {
-                      if (p < 0.45) {
-                        final bp = p / 0.45;
-                        bounceHeight = math.sin(bp * math.pi) * 26.0;
-                        wobbleDeg = math.sin(bp * math.pi) * 6.0;
-                      } else if (p < 0.78) {
-                        final bp = (p - 0.45) / 0.33;
-                        bounceHeight = math.sin(bp * math.pi) * 11.0;
-                        wobbleDeg = -math.sin(bp * math.pi) * 3.0;
-                      } else {
-                        final bp = (p - 0.78) / 0.22;
-                        bounceHeight = math.sin(bp * math.pi) * 4.0;
-                        wobbleDeg = math.sin(bp * math.pi) * 1.0;
-                      }
+                    if (p < 0.45) {
+                      final bp = p / 0.45;
+                      bounceH = math.sin(bp * math.pi) * 26.0;
+                      wobbleX = math.sin(bp * math.pi) * 6.5;
+                      wobbleY = math.cos(bp * math.pi) * 3.5;
+                    } else if (p < 0.78) {
+                      final bp = (p - 0.45) / 0.33;
+                      bounceH = math.sin(bp * math.pi) * 11.0;
+                      wobbleX = -math.sin(bp * math.pi) * 3.0;
+                      wobbleY = math.sin(bp * math.pi) * 1.5;
                     } else {
-                      if (p < 0.60) {
-                        final bp = p / 0.60;
-                        bounceHeight = math.sin(bp * math.pi) * 24.0;
-                        wobbleDeg = math.sin(bp * math.pi) * 5.0;
-                      } else {
-                        final bp = (p - 0.60) / 0.40;
-                        bounceHeight = math.sin(bp * math.pi) * 8.0;
-                        wobbleDeg = -math.sin(bp * math.pi) * 2.0;
-                      }
+                      final bp = (p - 0.78) / 0.22;
+                      bounceH = math.sin(bp * math.pi) * 3.5;
+                      wobbleX = math.sin(bp * math.pi) * 1.0;
+                      wobbleY = 0.0;
                     }
 
-                    translateY = -bounceHeight;
-                    rotXDeg = plan.endAngleDeg + wobbleDeg;
+                    translateY = -bounceH;
+                    rotXDeg = plan.endAngleDeg + wobbleX;
+                    rotYDeg = wobbleY;
                     scaleX = 1.0;
                     scaleY = 1.0;
                   }
@@ -235,10 +257,9 @@ class Coin3DWidget extends StatelessWidget {
                 final radY = rotYDeg * (math.pi / 180.0);
                 final radZ = rotZDeg * (math.pi / 180.0);
 
-                // Parity face check:
-                final cosVal = math.cos(radX);
-                final isHeadsFacing = cosVal >= 0;
-                final shineShift = math.sin(radX);
+                final cosX = math.cos(radX);
+                final isHeadsFacing = cosX >= 0;
+                final shineShift = math.sin(radX * 2.0);
 
                 return Transform.translate(
                   offset: Offset(0, translateY),
@@ -248,16 +269,16 @@ class Coin3DWidget extends StatelessWidget {
                     child: Transform(
                       alignment: Alignment.center,
                       transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.0011) // 3D Perspective
+                        ..setEntry(3, 2, 0.0016) // Realistic 3D perspective depth
                         ..rotateY(radY)
                         ..rotateZ(radZ)
                         ..rotateX(radX),
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // 3D Rim Depth Disc Layers (-7px to +7px)
-                          ...List.generate(9, (idx) {
-                            final z = (idx - 4) * 1.8;
+                          // 1. 3D Cylindrical Rim Extrusions (-6px to +6px along Z)
+                          ...List.generate(13, (idx) {
+                            final z = (idx - 6) * 0.95;
                             return Transform(
                               alignment: Alignment.center,
                               transform: Matrix4.identity()
@@ -267,32 +288,49 @@ class Coin3DWidget extends StatelessWidget {
                                 height: coinSize,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: const Color(0xFFC78B18),
+                                  gradient: const RadialGradient(
+                                    center: Alignment(-0.2, -0.2),
+                                    colors: [
+                                      Color(0xFFF3C258),
+                                      Color(0xFFC78810),
+                                      Color(0xFF8A5A0A),
+                                    ],
+                                    stops: [0.3, 0.7, 1.0],
+                                  ),
                                   border: Border.all(
-                                    color: const Color(0xFFE9B44C),
-                                    width: 1.2,
+                                    color: const Color(0xFFFFDF7A),
+                                    width: 1.1,
                                   ),
                                 ),
                               ),
                             );
                           }),
 
-                          // Active Facing Side (Heads or Tails)
-                          isHeadsFacing
-                              ? _GoldCoinFace(
-                                  face: CoinFace.heads,
-                                  size: coinSize,
-                                  shineOffset: shineShift,
-                                )
-                              : Transform(
-                                  alignment: Alignment.center,
-                                  transform: Matrix4.rotationX(math.pi),
-                                  child: _GoldCoinFace(
-                                    face: CoinFace.tails,
-                                    size: coinSize,
-                                    shineOffset: shineShift,
-                                  ),
-                                ),
+                          // 2. Active Front Face (Heads) at +Z front
+                          if (isHeadsFacing)
+                            Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setTranslationRaw(0.0, 0.0, 6.0),
+                              child: _GoldCoinFace(
+                                face: CoinFace.heads,
+                                size: coinSize,
+                                shineOffset: shineShift,
+                              ),
+                            )
+                          // 3. Active Back Face (Tails) at -Z back (pre-rotated 180° around X)
+                          else
+                            Transform(
+                              alignment: Alignment.center,
+                              transform: Matrix4.identity()
+                                ..setTranslationRaw(0.0, 0.0, -6.0)
+                                ..rotateX(math.pi),
+                              child: _GoldCoinFace(
+                                face: CoinFace.tails,
+                                size: coinSize,
+                                shineOffset: shineShift,
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -307,11 +345,12 @@ class Coin3DWidget extends StatelessWidget {
   }
 }
 
-/// Gold Coin Face:
-/// - Radial gradient #FCE29A, #E9B44C 55%, #C98A14
-/// - Custom milled rim ticks
+/// Realistic Gold Coin Face:
+/// - Rich radial gradient #FFF2C0, #F3C258 52%, #C78810 88%, #8A5A0A
+/// - Precision milled rim tick ridges with specular highlight
 /// - Inner raised golden bezel
-/// - Embossed Crown (Heads) / Ringed Star (Tails) / Milled Edge (No Result)
+/// - Embossed Crown (Heads) / Embossed Star (Tails) / Milled Rim (No Result)
+/// - Moving metallic specular shine sweep
 class _GoldCoinFace extends StatelessWidget {
   const _GoldCoinFace({
     required this.face,
@@ -335,17 +374,18 @@ class _GoldCoinFace extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: RadialGradient(
           center: Alignment(-0.35, -0.35),
-          radius: 0.85,
+          radius: 0.88,
           colors: [
-            Color(0xFFFCE29A), // Gold highlight
-            Color(0xFFE9B44C), // Rich yellow gold at 55%
-            Color(0xFFC98A14), // Deep coin gold rim
+            Color(0xFFFFF2C0), // Bright gold specular highlight
+            Color(0xFFF3C258), // Rich lustrous yellow gold at 52%
+            Color(0xFFC78810), // Deep coin gold rim
+            Color(0xFF8A5A0A), // Shadow edge
           ],
-          stops: [0.0, 0.55, 1.0],
+          stops: [0.0, 0.52, 0.88, 1.0],
         ),
         boxShadow: [
           BoxShadow(
-            color: Color(0x33A66A0D),
+            color: Color(0x388D5A08),
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -354,7 +394,7 @@ class _GoldCoinFace extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // 1. Milled Rim Perimeter Ticks
+          // 1. Milled Rim Perimeter Ticks (56 precision ridges)
           CustomPaint(
             size: Size(size, size),
             painter: const _MilledRimPainter(tickCount: 56),
@@ -367,12 +407,12 @@ class _GoldCoinFace extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFFFCE39E).withValues(alpha: 0.9),
+                color: const Color(0xFFFFF0B8).withValues(alpha: 0.95),
                 width: 2.2,
               ),
               gradient: const RadialGradient(
                 center: Alignment(0.2, 0.2),
-                radius: 0.9,
+                radius: 0.92,
                 colors: [
                   Color(0xFFFDE8AA),
                   Color(0xFFE5AE40),
@@ -381,29 +421,29 @@ class _GoldCoinFace extends StatelessWidget {
             ),
           ),
 
-          // 3. Center Emblem + Small Caps Face Title
+          // 3. Center Embossed Golden Medallion + Typography
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Embossed Golden Emblem
+              // Embossed Golden Medallion
               Container(
-                width: 48,
-                height: 48,
+                width: 50,
+                height: 50,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFFFF2C2),
+                      Color(0xFFFFF5D0),
                       Color(0xFFD6951A),
                     ],
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 4,
+                      color: Color(0x2E000000),
+                      blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
                   ],
@@ -413,16 +453,16 @@ class _GoldCoinFace extends StatelessWidget {
                     isNoResult
                         ? Icons.view_headline_rounded
                         : (isHeads
-                            ? Icons.workspace_premium_rounded // Crown
+                            ? Icons.workspace_premium_rounded // Imperial Crown
                             : Icons.stars_rounded), // Star
-                    size: 30,
+                    size: 32,
                     color: const Color(0xFF7A4E06),
                   ),
                 ),
               ),
               const SizedBox(height: 6),
 
-              // Small Caps Face Title
+              // Crisp Small-Caps Face Title
               Text(
                 isNoResult ? 'NO RESULT' : (isHeads ? 'HEADS' : 'TAILS'),
                 style: const TextStyle(
@@ -448,11 +488,11 @@ class _GoldCoinFace extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  begin: Alignment(-1.2 + (shineOffset * 0.8), -1.0),
-                  end: Alignment(1.2 + (shineOffset * 0.8), 1.0),
+                  begin: Alignment(-1.2 + (shineOffset * 0.85), -1.0),
+                  end: Alignment(1.2 + (shineOffset * 0.85), 1.0),
                   colors: [
                     Colors.white.withValues(alpha: 0.0),
-                    Colors.white.withValues(alpha: 0.38),
+                    Colors.white.withValues(alpha: 0.40),
                     Colors.white.withValues(alpha: 0.0),
                   ],
                   stops: const [0.35, 0.50, 0.65],
@@ -493,7 +533,8 @@ class _MilledRimPainter extends CustomPainter {
       final cosA = math.cos(angle);
       final sinA = math.sin(angle);
 
-      final pOuter = Offset(center.dx + radius * cosA, center.dy + radius * sinA);
+      final pOuter =
+          Offset(center.dx + radius * cosA, center.dy + radius * sinA);
       final pInner = Offset(
         center.dx + (radius - tickLen) * cosA,
         center.dy + (radius - tickLen) * sinA,
@@ -529,7 +570,7 @@ class _CoinSparksPainter extends CustomPainter {
     if (progress <= 0 || progress >= 1.0) return;
 
     final center = Offset(size.width / 2, size.height / 2 + 10);
-    const count = 8;
+    const count = 12;
     final easeP = Curves.easeOutCubic.transform(progress);
     final alpha = (1.0 - progress).clamp(0.0, 1.0);
 
@@ -540,8 +581,8 @@ class _CoinSparksPainter extends CustomPainter {
 
     for (int i = 0; i < count; i++) {
       final angle = (i * 2 * math.pi / count) + (i % 2 == 0 ? 0.2 : -0.15);
-      final distStart = 78.0 + (easeP * 20.0);
-      final distEnd = distStart + 10.0 + (easeP * 12.0);
+      final distStart = 78.0 + (easeP * 24.0);
+      final distEnd = distStart + 10.0 + (easeP * 14.0);
 
       final p1 = Offset(
         center.dx + distStart * math.cos(angle),

@@ -57,6 +57,31 @@ class HomeScreen extends ConsumerWidget {
           );
     }
 
+    Widget buildStaggeredAction(Widget child, int index) {
+      if (reduceMotion) return child;
+      return child
+          .animate()
+          .fadeIn(
+            duration: const Duration(milliseconds: 460),
+            curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+            delay: Duration(milliseconds: 80 * index),
+          )
+          .slideX(
+            begin: -0.45,
+            end: 0.0,
+            duration: const Duration(milliseconds: 520),
+            curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+            delay: Duration(milliseconds: 80 * index),
+          )
+          .scale(
+            begin: const Offset(0.85, 0.85),
+            end: const Offset(1.0, 1.0),
+            duration: const Duration(milliseconds: 520),
+            curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+            delay: Duration(milliseconds: 80 * index),
+          );
+    }
+
     return Scaffold(
       backgroundColor: PremiumDesignTokens.bgApp, // Level 0: #E4DACA
       body: SafeArea(
@@ -166,15 +191,15 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
 
-                // 4 Pastel Action Buttons Grid
+                // 4 Pastel Action Buttons Grid (Staggered left-to-right cinematic entry)
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverToBoxAdapter(
-                    child: wrapStagger(
-                      Row(
-                        children: [
-                          Expanded(
-                            child: QuickActionTile(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: buildStaggeredAction(
+                            QuickActionTile(
                               icon: Icons.shuffle_rounded,
                               label: 'Shuffle names',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
@@ -190,10 +215,13 @@ class HomeScreen extends ConsumerWidget {
                                 }
                               },
                             ),
+                            0,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: QuickActionTile(
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildStaggeredAction(
+                            QuickActionTile(
                               icon: Icons.monetization_on_rounded,
                               label: 'Toss Coin',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
@@ -203,10 +231,13 @@ class HomeScreen extends ConsumerWidget {
                                   PremiumDesignTokens.gradOrange,
                               onTap: () => context.go('/coin_toss'),
                             ),
+                            1,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: QuickActionTile(
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildStaggeredAction(
+                            QuickActionTile(
                               icon: Icons.group_add_rounded,
                               label: 'Create Group',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
@@ -215,10 +246,13 @@ class HomeScreen extends ConsumerWidget {
                               iconTileGradient: PremiumDesignTokens.gradTeal,
                               onTap: () => context.go('/groups'),
                             ),
+                            2,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: QuickActionTile(
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: buildStaggeredAction(
+                            QuickActionTile(
                               icon: Icons.history_rounded,
                               label: 'View History',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
@@ -228,10 +262,10 @@ class HomeScreen extends ConsumerWidget {
                                   PremiumDesignTokens.gradPurple,
                               onTap: () => context.go('/history'),
                             ),
+                            3,
                           ),
-                        ],
-                      ),
-                      3,
+                        ),
+                      ],
                     ),
                   ),
                 ),
