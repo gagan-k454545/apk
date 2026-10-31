@@ -163,7 +163,7 @@ class HomeScreen extends ConsumerWidget {
                             'Quick Actions',
                             style: TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: PremiumDesignTokens.textStrong,
                             ),
                           ),
@@ -173,7 +173,7 @@ class HomeScreen extends ConsumerWidget {
                                 'See All',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w600,
                                   color: PremiumDesignTokens.textMuted,
                                 ),
                               ),
@@ -308,7 +308,7 @@ class HomeScreen extends ConsumerWidget {
                             'Your Groups',
                             style: TextStyle(
                               fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: PremiumDesignTokens.textStrong,
                             ),
                           ),

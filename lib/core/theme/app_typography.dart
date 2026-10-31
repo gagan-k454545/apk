@@ -63,19 +63,19 @@ abstract final class AppTypography {
       ),
       bodyLarge: GoogleFonts.plusJakartaSans(
         fontSize: 16,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         color: textColor,
       ),
       bodyMedium: GoogleFonts.plusJakartaSans(
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.1,
         color: secondaryTextColor,
       ),
       bodySmall: GoogleFonts.plusJakartaSans(
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
         letterSpacing: 0.2,
         color: secondaryTextColor,
       ),

@@ -148,6 +148,7 @@ class _HeroDecisionCardState extends State<HeroDecisionCard>
                             'Create groups, shuffle names, toss a coin and make fair decisions in seconds.',
                             style: TextStyle(
                               fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
                               height: 1.4,
                               color: PremiumDesignTokens.textBody,
                             ),

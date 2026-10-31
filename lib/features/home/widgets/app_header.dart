@@ -73,7 +73,7 @@ class AppHeader extends StatelessWidget {
                   'Randomize anything. Decide instantly.',
                   style: TextStyle(
                     fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: PremiumDesignTokens.textBody,
                   ),
                   maxLines: 1,

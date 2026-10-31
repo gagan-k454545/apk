@@ -161,7 +161,7 @@ class StatsStrip extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
                 color: PremiumDesignTokens.textMuted,
               ),
             ),

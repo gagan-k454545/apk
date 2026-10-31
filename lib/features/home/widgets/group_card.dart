@@ -101,7 +101,7 @@ class GroupCard extends StatelessWidget {
                   name,
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     height: 1.2,
                     color: PremiumDesignTokens.textStrong,
                   ),
@@ -112,8 +112,8 @@ class GroupCard extends StatelessWidget {
                 Text(
                   '$memberCount names',
                   style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
                     height: 1.2,
                     color: PremiumDesignTokens.textMuted,
                   ),

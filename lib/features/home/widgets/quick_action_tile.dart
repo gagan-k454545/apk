@@ -75,7 +75,7 @@ class QuickActionTile extends StatelessWidget {
               label,
               style: const TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: PremiumDesignTokens.textStrong,
               ),
               textAlign: TextAlign.center,

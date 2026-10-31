@@ -160,22 +160,24 @@ class _FeatureCardState extends State<FeatureCard>
                   ),
                   const SizedBox(height: 10),
 
-                  // Title (18/22 700 --text-strong)
+                  // Title (17/22 800 --text-strong)
                   Text(
                     widget.title,
                     style: const TextStyle(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.2,
                       color: PremiumDesignTokens.textStrong,
                     ),
                   ),
                   const SizedBox(height: 4),
 
-                  // Body (12.5/18 400 --text-body)
+                  // Body (12/18 500 --text-body)
                   Text(
                     widget.description,
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       height: 1.35,
                       color: PremiumDesignTokens.textBody,
                     ),
@@ -220,8 +222,8 @@ class _FeatureCardState extends State<FeatureCard>
                         Text(
                           widget.badgeText,
                           style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
                             color: widget.isPeachCard
                                 ? PremiumDesignTokens.orange500
                                 : PremiumDesignTokens.green600,
