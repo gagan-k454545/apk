@@ -10,6 +10,7 @@ import '../../features/coin_toss/coin_toss_screen.dart';
 import '../../features/history/history_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../providers/providers.dart';
+import '../widgets/premium/premium_bottom_nav.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();
@@ -94,10 +95,9 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final location = GoRouterState.of(context).uri.toString();
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/groups')) return 1;
-    if (location.startsWith('/coin_toss')) return 2;
-    if (location.startsWith('/history')) return 3;
-    if (location.startsWith('/settings')) return 4;
-    return 0;
+    if (location.startsWith('/history')) return 2;
+    if (location.startsWith('/settings')) return 3;
+    return -1;
   }
 
   @override
@@ -106,9 +106,21 @@ class ScaffoldWithNavBar extends ConsumerWidget {
 
     return Scaffold(
       body: child,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
+      bottomNavigationBar: PremiumBottomNav(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/home');
+            case 1:
+              context.go('/groups');
+            case 2:
+              context.go('/history');
+            case 3:
+              context.go('/settings');
+          }
+        },
+        onCenterTap: () {
           final groups = ref.read(groupsProvider);
           if (groups.isNotEmpty) {
             context.push('/shuffle/${groups.first.id}');
@@ -116,55 +128,6 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             context.push('/shuffle/cricket-6');
           }
         },
-        backgroundColor: const Color(0xFF1E3A2B),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.shuffle_rounded, size: 26),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          switch (index) {
-            case 0:
-              context.go('/home');
-            case 1:
-              context.go('/groups');
-            case 2:
-              context.go('/coin_toss');
-            case 3:
-              context.go('/history');
-            case 4:
-              context.go('/settings');
-          }
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.group_outlined),
-            selectedIcon: Icon(Icons.group),
-            label: 'Groups',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.monetization_on_outlined),
-            selectedIcon: Icon(Icons.monetization_on),
-            label: 'Coin Toss',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
       ),
     );
   }
