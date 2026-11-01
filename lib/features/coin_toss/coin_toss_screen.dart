@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/services/audio_haptic_service.dart';
@@ -21,15 +23,21 @@ import 'widgets/coin_3d_widget.dart';
 /// - Recent Tosses: latest 10, slide-in animation, clear all & individual delete
 /// - Bottom nav clearance (106 + bottomInset)
 class CoinTossScreen extends ConsumerStatefulWidget {
-  const CoinTossScreen({super.key});
+  const CoinTossScreen({
+    super.key,
+    this.isPushed = false,
+  });
+
+  final bool isPushed;
 
   @override
   ConsumerState<CoinTossScreen> createState() => _CoinTossScreenState();
 }
 
 class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _animationController;
+  late final AnimationController _idleFloatController;
   late TossPlan _currentPlan;
   CoinFace _currentFace = CoinFace.heads;
 
@@ -67,6 +75,11 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     );
+
+    _idleFloatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2600),
+    )..repeat(reverse: true);
 
     _animationController.addListener(_handleAnimationProgress);
 
@@ -166,6 +179,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
     if (_isTossing && _pendingEntry != null) {
       ref.read(coinTossProvider.notifier).saveTossResult(_pendingEntry!);
     }
+    _idleFloatController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -228,6 +242,25 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
     final headsPct = notifier.headsPercentage;
     final tailsPct = notifier.tailsPercentage;
     final noResultPct = notifier.noResultPercentage;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+
+    Widget wrapStagger(Widget child, int index) {
+      if (reduceMotion) return child;
+      return child
+          .animate()
+          .fadeIn(
+            duration: const Duration(milliseconds: 380),
+            curve: const Cubic(0.2, 0.8, 0.2, 1.0),
+            delay: Duration(milliseconds: 60 * index),
+          )
+          .slideY(
+            begin: 0.08,
+            end: 0,
+            duration: const Duration(milliseconds: 380),
+            curve: const Cubic(0.2, 0.8, 0.2, 1.0),
+            delay: Duration(milliseconds: 60 * index),
+          );
+    }
 
     return Scaffold(
       backgroundColor: PremiumDesignTokens.bgApp,
@@ -238,35 +271,71 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
           slivers: [
             // 1. Header Row
             SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Coin Toss',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.4,
+              child: wrapStagger(
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+                  child: Row(
+                    children: [
+                      if (widget.isPushed || Navigator.of(context).canPop()) ...[
+                        PressableScale(
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/home');
+                            }
+                          },
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: PremiumDesignTokens.innerBorder,
+                              ),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x0F1B4332),
+                                  blurRadius: 4,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_rounded,
+                              size: 20,
                               color: PremiumDesignTokens.textStrong,
                             ),
                           ),
-                          SizedBox(height: 2),
-                          Text(
-                            'True Random · Anti-Streak · 3-Way Fair',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: PremiumDesignTokens.textMuted,
+                        ),
+                      ],
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Coin Toss',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.4,
+                                color: PremiumDesignTokens.textStrong,
+                              ),
                             ),
-                          ),
-                        ],
+                            SizedBox(height: 2),
+                            Text(
+                              'True Random · Anti-Streak · 3-Way Fair',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: PremiumDesignTokens.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
                     // Sound Toggle
                     PressableScale(
@@ -337,11 +406,14 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   ],
                 ),
               ),
+              0,
             ),
+          ),
 
-            // 2. Main Stage Card
-            SliverToBoxAdapter(
-              child: Padding(
+          // 2. Main Stage Card
+          SliverToBoxAdapter(
+            child: wrapStagger(
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Container(
                   decoration: BoxDecoration(
@@ -404,6 +476,7 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                       // 3D Coin Stage Area (~260px)
                       Coin3DWidget(
                         animationController: _animationController,
+                        idleAnimationController: _idleFloatController,
                         plan: _currentPlan,
                         isTossing: _isTossing,
                         hasResult: _hasResult,
@@ -488,11 +561,14 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   ),
                 ),
               ),
+              1,
             ),
+          ),
 
-            // 3. Statistics Section (3 equal tiles for Heads, Tails, No Result + 3-way split bar)
-            SliverToBoxAdapter(
-              child: Padding(
+          // 3. Statistics Section (3 equal tiles for Heads, Tails, No Result + 3-way split bar)
+          SliverToBoxAdapter(
+            child: wrapStagger(
+              Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
                 child: Container(
                   decoration: BoxDecoration(
@@ -640,11 +716,14 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   ),
                 ),
               ),
+              2,
             ),
+          ),
 
-            // 4. Recent Tosses Section
-            SliverToBoxAdapter(
-              child: Padding(
+          // 4. Recent Tosses Section
+          SliverToBoxAdapter(
+            child: wrapStagger(
+              Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 16, 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -679,7 +758,9 @@ class _CoinTossScreenState extends ConsumerState<CoinTossScreen>
                   ],
                 ),
               ),
+              3,
             ),
+          ),
 
             // Recent Tosses List
             if (history.isEmpty)

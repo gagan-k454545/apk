@@ -1,66 +1,102 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'widgets/premium_3d_splash_logo.dart';
 
+/// The luxury startup splash screen for Shuffle Master.
+///
+/// Clean, minimalist, and focused solely on the cinematic 3D logo animation.
+/// Seamlessly loops without jumps, and transitions gracefully to `/home`.
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.autoNavigate = true,
+    this.displayDuration = const Duration(milliseconds: 3800),
+    this.onProceed,
+  });
+
+  /// Whether to automatically transition to `/home` after [displayDuration].
+  final bool autoNavigate;
+
+  /// Duration before transitioning to the home screen.
+  final Duration displayDuration;
+
+  /// Optional custom callback invoked upon exit instead of [context.go('/home')].
+  final VoidCallback? onProceed;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _exitController;
+  Timer? _timer;
+  bool _isNavigating = false;
+
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _exitController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    if (widget.autoNavigate) {
+      _timer = Timer(widget.displayDuration, _proceedToHome);
+    }
   }
 
-  Future<void> _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-      context.go('/home');
-    }
+  void _proceedToHome() {
+    if (_isNavigating || !mounted) return;
+    _isNavigating = true;
+
+    // Smooth cinematic exit fade
+    _exitController.forward().then((_) {
+      if (mounted) {
+        if (widget.onProceed != null) {
+          widget.onProceed!();
+        } else {
+          context.go('/home');
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _exitController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: _proceedToHome, // Allow quick skip if user taps
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF3EBE0),
+        body: AnimatedBuilder(
+          animation: _exitController,
+          builder: (context, child) {
+            final exitProgress = _exitController.value;
+            final opacity = (1.0 - exitProgress).clamp(0.0, 1.0);
+            final scale = 1.0 + (0.04 * exitProgress);
 
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.shuffle,
-              size: 80,
-              color: theme.colorScheme.primary,
-            )
-                .animate()
-                .fadeIn(duration: 600.ms)
-                .scale(begin: const Offset(0.5, 0.5), end: const Offset(1, 1)),
-            const SizedBox(height: 24),
-            Text(
-              'Shuffle Master',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            return Opacity(
+              opacity: opacity,
+              child: Transform.scale(
+                scale: scale,
+                child: child,
               ),
-            )
-                .animate()
-                .fadeIn(delay: 300.ms, duration: 600.ms)
-                .slideY(begin: 0.3, end: 0),
-            const SizedBox(height: 8),
-            Text(
-              'Randomize instantly',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            )
-                .animate()
-                .fadeIn(delay: 600.ms, duration: 600.ms)
-                .slideY(begin: 0.3, end: 0),
-          ],
+            );
+          },
+          child: const Center(
+            child: Premium3dSplashAnimation(
+              size: 190.0,
+            ),
+          ),
         ),
       ),
     );

@@ -24,6 +24,7 @@ class Coin3DWidget extends StatelessWidget {
     required this.hasResult,
     required this.onTap,
     this.coinSize = 150.0,
+    this.idleAnimationController,
   });
 
   final AnimationController animationController;
@@ -32,10 +33,14 @@ class Coin3DWidget extends StatelessWidget {
   final bool hasResult;
   final VoidCallback onTap;
   final double coinSize;
+  final AnimationController? idleAnimationController;
 
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
+    final Listenable animationToListen = idleAnimationController != null
+        ? Listenable.merge([animationController, idleAnimationController!])
+        : animationController;
 
     return GestureDetector(
       onTap: isTossing ? null : onTap,
@@ -47,7 +52,7 @@ class Coin3DWidget extends StatelessWidget {
           children: [
             // 1. Super Realistic Dynamic Ground Shadow
             AnimatedBuilder(
-              animation: animationController,
+              animation: animationToListen,
               builder: (context, child) {
                 final double v = animationController.value;
                 final isEdgeLanded = hasResult && plan.isNoResult;
@@ -83,6 +88,9 @@ class Coin3DWidget extends StatelessWidget {
                     }
                     translateY = -h;
                   }
+                } else if (!isTossing && !reduceMotion && idleAnimationController != null) {
+                  final idleVal = idleAnimationController!.value;
+                  translateY = -7.0 * math.sin(idleVal * math.pi);
                 }
 
                 // Altitude ratio: 0.0 (ground) to 1.0 (apex)
@@ -136,7 +144,7 @@ class Coin3DWidget extends StatelessWidget {
 
             // 3. Super Realistic 3D Animated Gold Coin
             AnimatedBuilder(
-              animation: animationController,
+              animation: animationToListen,
               builder: (context, child) {
                 final double v = animationController.value;
 
@@ -161,8 +169,20 @@ class Coin3DWidget extends StatelessWidget {
 
                 if (!isTossing && !hasResult) {
                   rotXDeg = plan.startAngleDeg;
+                  if (!reduceMotion && idleAnimationController != null) {
+                    final idleVal = idleAnimationController!.value;
+                    translateY = -7.0 * math.sin(idleVal * math.pi);
+                    rotYDeg = 4.0 * math.cos(idleVal * math.pi);
+                    rotZDeg = 2.0 * math.sin(idleVal * math.pi);
+                  }
                 } else if (!isTossing && hasResult) {
                   rotXDeg = plan.endAngleDeg;
+                  if (!reduceMotion && idleAnimationController != null) {
+                    final idleVal = idleAnimationController!.value;
+                    translateY = -7.0 * math.sin(idleVal * math.pi);
+                    rotYDeg = 4.0 * math.cos(idleVal * math.pi);
+                    rotZDeg = 2.0 * math.sin(idleVal * math.pi);
+                  }
                 } else {
                   // Active Cinematic Toss Physics Timeline
                   final totalTurnsDeg = plan.totalTurnsDeg > 0

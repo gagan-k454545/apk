@@ -82,6 +82,12 @@ final routerProvider = Provider<GoRouter>((ref) {
           groupId: state.pathParameters['groupId']!,
         ),
       ),
+      GoRoute(
+        path: '/coin_toss_screen',
+        name: 'coinTossScreen',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CoinTossScreen(isPushed: true),
+      ),
     ],
   );
 });

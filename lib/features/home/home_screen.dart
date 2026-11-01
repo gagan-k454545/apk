@@ -140,7 +140,7 @@ class HomeScreen extends ConsumerWidget {
                           // Card B: Coin Toss (High-Fidelity 3D Feature Card matching Name Shuffle)
                           Expanded(
                             child: CoinTossFeatureCard(
-                              onTap: () => context.go('/coin_toss'),
+                              onTap: () => context.push('/coin_toss_screen'),
                             ),
                           ),
                         ],
@@ -229,7 +229,7 @@ class HomeScreen extends ConsumerWidget {
                                   PremiumDesignTokens.gradNeutralCard,
                               iconTileGradient:
                                   PremiumDesignTokens.gradOrange,
-                              onTap: () => context.go('/coin_toss'),
+                              onTap: () => context.push('/coin_toss_screen'),
                             ),
                             1,
                           ),
