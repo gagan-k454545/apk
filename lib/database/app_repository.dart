@@ -20,6 +20,14 @@ class AppRepository {
     _settingsBox = await Hive.openBox(AppConstants.settingsBox);
     ShuffleMemory.instance.attachStorageBox(_settingsBox);
     // Clean up any previously seeded dummy groups and dummy history
+    final isPurged =
+        _settingsBox.get('dummy_data_purged_v3', defaultValue: false);
+    if (isPurged != true) {
+      await _groupsBox.clear();
+      await _historyBox.clear();
+      await _settingsBox.put('dummy_data_purged_v3', true);
+    }
+
     const dummyGroupIds = [
       'cricket-6',
       'classmates',
@@ -76,7 +84,19 @@ class AppRepository {
       for (final v in _groupsBox.values) {
         try {
           if (v is Map) {
-            list.add(Group.fromMap(Map<String, dynamic>.from(v)));
+            final g = Group.fromMap(Map<String, dynamic>.from(v));
+            final lower = g.name.toLowerCase().trim();
+            // Completely filter out any dummy groups
+            if (lower != 'cricket 6' &&
+                lower != 'classmates' &&
+                lower != 'project team' &&
+                lower != 'game night' &&
+                !g.id.startsWith('cricket') &&
+                !g.id.startsWith('classmates') &&
+                !g.id.startsWith('project') &&
+                !g.id.startsWith('game')) {
+              list.add(g);
+            }
           }
         } catch (e, stack) {
           // ignore: avoid_print

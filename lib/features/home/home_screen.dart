@@ -118,7 +118,7 @@ class HomeScreen extends ConsumerWidget {
 
                 // 3. Two Main Feature Cards (index 2)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
                   sliver: SliverToBoxAdapter(
                     child: wrapStagger(
                       Row(
@@ -154,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 11, 16, 7),
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -201,7 +201,7 @@ class HomeScreen extends ConsumerWidget {
                           child: buildStaggeredAction(
                             QuickActionTile(
                               icon: Icons.shuffle_rounded,
-                              label: 'Shuffle Names',
+                              label: 'Shuffle',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
                               backgroundGradient:
                                   PremiumDesignTokens.gradNeutralCard,
@@ -272,7 +272,7 @@ class HomeScreen extends ConsumerWidget {
 
                 // 5. Stats Strip (index 4)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 11, 16, 4),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
                   sliver: SliverToBoxAdapter(
                     child: wrapStagger(
                       StatsStrip(
@@ -290,7 +290,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 11, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
                       child: Row(
                         children: [
                           Container(
