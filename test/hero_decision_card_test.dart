@@ -4,7 +4,7 @@ import 'package:shuffle_master/features/home/widgets/hero_decision_card.dart';
 
 void main() {
   testWidgets(
-      'HeroDecisionCard renders banner, basket, names and triggers onGetStarted from button tap',
+      'HeroDecisionCard renders banner, basket, sparkles with zero dummy names and triggers onGetStarted',
       (WidgetTester tester) async {
     int tapCount = 0;
 
@@ -31,12 +31,12 @@ void main() {
     // Verify Images are present (background and 3D basket)
     expect(find.byType(Image), findsWidgets);
 
-    // Verify names are present
-    expect(find.text('Gagan'), findsOneWidget);
-    expect(find.text('Bala'), findsOneWidget);
-    expect(find.text('Anshu'), findsOneWidget);
-    expect(find.text('Rakshan'), findsOneWidget);
-    expect(find.text('vinayaka'), findsOneWidget);
+    // Verify ZERO dummy names are present
+    expect(find.text('Gagan'), findsNothing);
+    expect(find.text('Bala'), findsNothing);
+    expect(find.text('Anshu'), findsNothing);
+    expect(find.text('Rakshan'), findsNothing);
+    expect(find.text('vinayaka'), findsNothing);
 
     // Verify Semantics for Get Started button is present
     expect(find.bySemanticsLabel('Get Started'), findsOneWidget);

@@ -147,17 +147,20 @@ class _QuickActionTileState extends State<QuickActionTile>
                           _buildIconTile(baseGlow, reduceMotion),
                           const SizedBox(height: 5),
 
-                          // 11px Label in --text-strong
-                          Text(
-                            widget.label,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: PremiumDesignTokens.textStrong,
+                          // 11px Label in --text-strong with auto-fit protection
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              widget.label,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.2,
+                                color: PremiumDesignTokens.textStrong,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
                             ),
-                            textAlign: TextAlign.center,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),

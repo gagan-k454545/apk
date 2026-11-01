@@ -19,78 +19,52 @@ class AppRepository {
     _coinTossBox = await Hive.openBox(AppConstants.coinTossBox);
     _settingsBox = await Hive.openBox(AppConstants.settingsBox);
     ShuffleMemory.instance.attachStorageBox(_settingsBox);
-    if (_groupsBox.isEmpty) {
-      final defaultGroups = [
-        Group(
-          id: 'cricket-6',
-          name: 'Cricket 6',
-          members: [
-            NameEntry(name: 'Aarav Sharma', isFavorite: true),
-            NameEntry(name: 'Priya Patel'),
-            NameEntry(name: 'Rahul Verma'),
-            NameEntry(name: 'Neha Singh'),
-            NameEntry(name: 'Karan Malhotra'),
-            NameEntry(name: 'Vikram Joshi'),
-            NameEntry(name: 'Rohan Gupta'),
-          ],
-        ),
-        Group(
-          id: 'classmates',
-          name: 'Classmates',
-          members: [
-            NameEntry(name: 'Aarav'),
-            NameEntry(name: 'Priya'),
-            NameEntry(name: 'Rahul'),
-            NameEntry(name: 'Neha'),
-            NameEntry(name: 'Karan'),
-            NameEntry(name: 'Vikram'),
-            NameEntry(name: 'Rohan'),
-            NameEntry(name: 'Ananya'),
-            NameEntry(name: 'Kabir'),
-            NameEntry(name: 'Ishaan'),
-            NameEntry(name: 'Meera'),
-            NameEntry(name: 'Arjun'),
-          ],
-        ),
-        Group(
-          id: 'project-team',
-          name: 'Project Team',
-          members: [
-            NameEntry(name: 'Alex'),
-            NameEntry(name: 'Sarah'),
-            NameEntry(name: 'David'),
-            NameEntry(name: 'Maya'),
-            NameEntry(name: 'James'),
-            NameEntry(name: 'Elena'),
-            NameEntry(name: 'Chris'),
-            NameEntry(name: 'Lisa'),
-          ],
-        ),
-        Group(
-          id: 'game-night',
-          name: 'Game Night',
-          members: [
-            NameEntry(name: 'Sam'),
-            NameEntry(name: 'Jordan'),
-            NameEntry(name: 'Taylor'),
-            NameEntry(name: 'Morgan'),
-            NameEntry(name: 'Casey'),
-            NameEntry(name: 'Riley'),
-            NameEntry(name: 'Avery'),
-            NameEntry(name: 'Quinn'),
-            NameEntry(name: 'Dakota'),
-            NameEntry(name: 'Reese'),
-            NameEntry(name: 'Hayden'),
-            NameEntry(name: 'Skyler'),
-            NameEntry(name: 'Rowan'),
-            NameEntry(name: 'Finley'),
-            NameEntry(name: 'Emerson'),
-          ],
-        ),
-      ];
-      for (final g in defaultGroups) {
-        await _groupsBox.put(g.id, g.toMap());
+    // Clean up any previously seeded dummy groups and dummy history
+    const dummyGroupIds = [
+      'cricket-6',
+      'classmates',
+      'project-team',
+      'game-night',
+    ];
+    for (final dummyId in dummyGroupIds) {
+      if (_groupsBox.containsKey(dummyId)) {
+        await _groupsBox.delete(dummyId);
       }
+    }
+    final groupKeysToRemove = <dynamic>[];
+    for (final key in _groupsBox.keys) {
+      final val = _groupsBox.get(key);
+      if (val is Map) {
+        final name = (val['name'] ?? '').toString().toLowerCase().trim();
+        if (name == 'cricket 6' ||
+            name == 'classmates' ||
+            name == 'project team' ||
+            name == 'game night') {
+          groupKeysToRemove.add(key);
+        }
+      }
+    }
+    for (final k in groupKeysToRemove) {
+      await _groupsBox.delete(k);
+    }
+
+    final historyKeysToRemove = <dynamic>[];
+    for (final key in _historyBox.keys) {
+      final val = _historyBox.get(key);
+      if (val is Map) {
+        final gId = (val['groupId'] ?? '').toString();
+        final gName = (val['groupName'] ?? '').toString().toLowerCase().trim();
+        if (dummyGroupIds.contains(gId) ||
+            gName == 'cricket 6' ||
+            gName == 'classmates' ||
+            gName == 'project team' ||
+            gName == 'game night') {
+          historyKeysToRemove.add(key);
+        }
+      }
+    }
+    for (final k in historyKeysToRemove) {
+      await _historyBox.delete(k);
     }
   }
 

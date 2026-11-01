@@ -39,23 +39,12 @@ class _PremiumShuffleResultScreenState
   bool _isSaved = false;
   List<String> _result = [];
   List<String> _visualShuffleList = [];
-  String _groupName = 'Cricket 6';
-  int _memberCount = 7;
+  String _groupName = 'Shuffle';
+  int _memberCount = 0;
   int _shuffleStepCount = 0;
 
   Timer? _intermediateTimer;
   final AudioHapticService _audioHapticService = const AudioHapticService();
-
-  // Mocked baseline members for the "Cricket 6" shuffle flow
-  static const List<String> _defaultCricketMembers = [
-    'Aarav Sharma',
-    'Priya Patel',
-    'Rahul Verma',
-    'Neha Singh',
-    'Karan Malhotra',
-    'Vikram Joshi',
-    'Rohan Gupta',
-  ];
 
   @override
   void initState() {
@@ -70,30 +59,21 @@ class _PremiumShuffleResultScreenState
 
   void _loadGroup() {
     final groups = ref.read(groupsProvider);
-    final group = groups.firstWhere(
-      (g) =>
-          g.id == widget.groupId ||
-          g.name.toLowerCase() == 'cricket 6',
-      orElse: () {
-        if (groups.isNotEmpty) return groups.first;
-        return Group(
-          id: 'cricket-6',
-          name: 'Cricket 6',
-          members: _defaultCricketMembers
-              .map((name) => NameEntry(name: name))
-              .toList(),
-        );
-      },
-    );
+    final Group? group = groups.where((g) => g.id == widget.groupId).firstOrNull ??
+        (groups.isNotEmpty ? groups.first : null);
 
-    _groupName = group.name.isNotEmpty ? group.name : 'Cricket 6';
-    final memberNames = group.members.isNotEmpty
-        ? group.members.map((m) => m.name).toList()
-        : List<String>.from(_defaultCricketMembers);
-
-    _memberCount = memberNames.length;
-    _result = List<String>.from(memberNames);
-    _visualShuffleList = List<String>.from(memberNames);
+    if (group != null) {
+      _groupName = group.name;
+      final memberNames = group.members.map((m) => m.name).toList();
+      _memberCount = memberNames.length;
+      _result = List<String>.from(memberNames);
+      _visualShuffleList = List<String>.from(memberNames);
+    } else {
+      _groupName = 'Names';
+      _memberCount = 0;
+      _result = [];
+      _visualShuffleList = [];
+    }
   }
 
   @override
@@ -107,16 +87,17 @@ class _PremiumShuffleResultScreenState
     if (_isShuffling) return;
 
     final groups = ref.read(groupsProvider);
-    final group = groups.firstWhere(
-      (g) =>
-          g.id == widget.groupId ||
-          g.name.toLowerCase() == _groupName.toLowerCase(),
-      orElse: () => Group(
-        id: 'cricket-6',
-        name: _groupName,
-        members: _result.map((n) => NameEntry(name: n)).toList(),
-      ),
-    );
+    final Group? group = groups.where((g) => g.id == widget.groupId).firstOrNull ??
+        (groups.isNotEmpty ? groups.first : null);
+
+    if (group == null || group.members.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add names to this group before shuffling.'),
+        ),
+      );
+      return;
+    }
 
     final settings = ref.read(settingsProvider);
     _audioHapticService.playLaunch(settings);
@@ -182,22 +163,19 @@ class _PremiumShuffleResultScreenState
   }
 
   void _saveOrder() {
+    if (_result.isEmpty) return;
+
     final groups = ref.read(groupsProvider);
-    final group = groups.firstWhere(
-      (g) =>
-          g.id == widget.groupId ||
-          g.name.toLowerCase() == _groupName.toLowerCase(),
-      orElse: () => Group(
-        id: 'cricket-6',
-        name: _groupName,
-        members: _result.map((n) => NameEntry(name: n)).toList(),
-      ),
-    );
+    final Group? group = groups.where((g) => g.id == widget.groupId).firstOrNull ??
+        (groups.isNotEmpty ? groups.first : null);
+
+    final groupId = group?.id ?? 'custom';
+    final groupName = group?.name ?? _groupName;
 
     ref.read(historyProvider.notifier).addEntry(
           HistoryEntry(
-            groupId: group.id,
-            groupName: group.name,
+            groupId: groupId,
+            groupName: groupName,
             result: _result,
           ),
         );

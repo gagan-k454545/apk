@@ -19,7 +19,7 @@ class CoinTossFeatureCard extends StatefulWidget {
   const CoinTossFeatureCard({
     super.key,
     required this.onTap,
-    this.height = 205,
+    this.height = 195,
   });
 
   final VoidCallback onTap;
@@ -356,12 +356,16 @@ class _CoinTossFeatureCardState extends State<CoinTossFeatureCard>
                 color: PremiumDesignTokens.orange500,
               ),
               SizedBox(width: 4),
-              Text(
-                '3D Animation',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: PremiumDesignTokens.orange500,
+              Flexible(
+                child: Text(
+                  '3D Animation',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: PremiumDesignTokens.orange500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

@@ -107,7 +107,7 @@ class HomeScreen extends ConsumerWidget {
                           if (groups.isNotEmpty) {
                             context.push('/shuffle/${groups.first.id}');
                           } else {
-                            context.push('/shuffle/cricket-6');
+                            context.go('/groups');
                           }
                         },
                       ),
@@ -118,7 +118,7 @@ class HomeScreen extends ConsumerWidget {
 
                 // 3. Two Main Feature Cards (index 2)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
                   sliver: SliverToBoxAdapter(
                     child: wrapStagger(
                       Row(
@@ -130,7 +130,7 @@ class HomeScreen extends ConsumerWidget {
                                 if (groups.isNotEmpty) {
                                   context.push('/shuffle/${groups.first.id}');
                                 } else {
-                                  context.push('/shuffle/cricket-6');
+                                  context.go('/groups');
                                 }
                               },
                             ),
@@ -154,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+                      padding: EdgeInsets.fromLTRB(16, 11, 16, 7),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -201,7 +201,7 @@ class HomeScreen extends ConsumerWidget {
                           child: buildStaggeredAction(
                             QuickActionTile(
                               icon: Icons.shuffle_rounded,
-                              label: 'Shuffle names',
+                              label: 'Shuffle Names',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
                               backgroundGradient:
                                   PremiumDesignTokens.gradNeutralCard,
@@ -211,7 +211,7 @@ class HomeScreen extends ConsumerWidget {
                                 if (groups.isNotEmpty) {
                                   context.push('/shuffle/${groups.first.id}');
                                 } else {
-                                  context.push('/shuffle/cricket-6');
+                                  context.go('/groups');
                                 }
                               },
                             ),
@@ -223,7 +223,7 @@ class HomeScreen extends ConsumerWidget {
                           child: buildStaggeredAction(
                             QuickActionTile(
                               icon: Icons.monetization_on_rounded,
-                              label: 'Toss Coin',
+                              label: 'Coin Toss',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
                               backgroundGradient:
                                   PremiumDesignTokens.gradNeutralCard,
@@ -239,7 +239,7 @@ class HomeScreen extends ConsumerWidget {
                           child: buildStaggeredAction(
                             QuickActionTile(
                               icon: Icons.group_add_rounded,
-                              label: 'Create Group',
+                              label: 'New Group',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
                               backgroundGradient:
                                   PremiumDesignTokens.gradNeutralCard,
@@ -254,7 +254,7 @@ class HomeScreen extends ConsumerWidget {
                           child: buildStaggeredAction(
                             QuickActionTile(
                               icon: Icons.history_rounded,
-                              label: 'View History',
+                              label: 'History',
                               backgroundColor: PremiumDesignTokens.surfaceSoft,
                               backgroundGradient:
                                   PremiumDesignTokens.gradNeutralCard,
@@ -272,7 +272,7 @@ class HomeScreen extends ConsumerWidget {
 
                 // 5. Stats Strip (index 4)
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                  padding: const EdgeInsets.fromLTRB(16, 11, 16, 4),
                   sliver: SliverToBoxAdapter(
                     child: wrapStagger(
                       StatsStrip(
@@ -290,7 +290,7 @@ class HomeScreen extends ConsumerWidget {
                 SliverToBoxAdapter(
                   child: wrapStagger(
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                      padding: const EdgeInsets.fromLTRB(16, 11, 16, 8),
                       child: Row(
                         children: [
                           Container(
@@ -324,9 +324,9 @@ class HomeScreen extends ConsumerWidget {
                           PressableScale(
                             onTap: () => context.go('/groups'),
                             child: Container(
-                              height: 38,
+                              height: 36,
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
+                                horizontal: 14,
                               ),
                               decoration: BoxDecoration(
                                 gradient: PremiumDesignTokens.gradPrimary,
@@ -336,16 +336,18 @@ class HomeScreen extends ConsumerWidget {
                                 boxShadow: PremiumDesignTokens.shadowButton,
                               ),
                               child: const Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.add,
+                                  Icon(Icons.add_rounded,
                                       color: Colors.white, size: 16),
                                   SizedBox(width: 4),
                                   Text(
                                     'New Group',
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 13,
+                                      letterSpacing: -0.2,
                                     ),
                                   ),
                                 ],

@@ -27,8 +27,9 @@ void main() {
 
       await tester.pump(const Duration(milliseconds: 100));
 
-      // 1. Verify Card Graphic is rendered
-      expect(find.byType(Image), findsOneWidget);
+      // 1. Verify Title & Subtitle Badge
+      expect(find.text('Name Shuffle'), findsOneWidget);
+      expect(find.text('Fair & Instant'), findsOneWidget);
 
       // 2. Verify Semantics Button role & label
       final semantics = find.bySemanticsLabel(
@@ -69,7 +70,8 @@ void main() {
 
       await tester.pump();
 
-      expect(find.byType(Image), findsOneWidget);
+      expect(find.text('Name Shuffle'), findsOneWidget);
+      expect(find.text('Fair & Instant'), findsOneWidget);
 
       final semantics = find.bySemanticsLabel(
         'Name Shuffle, Randomize a list of names using pure Fisher-Yates algorithm.',

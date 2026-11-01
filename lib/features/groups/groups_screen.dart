@@ -562,7 +562,7 @@ class _GroupsScreenState extends ConsumerState<GroupsScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: const InputDecoration(
-                  hintText: 'e.g. Cricket 6, Project Team',
+                  hintText: 'e.g. Friends, Team Alpha, Family',
                   hintStyle: TextStyle(
                     fontSize: 16,
                     color: PremiumDesignTokens.textMuted,

@@ -135,7 +135,7 @@ class ScaffoldWithNavBar extends ConsumerWidget {
           if (groups.isNotEmpty) {
             context.push('/shuffle/${groups.first.id}');
           } else {
-            context.push('/shuffle/cricket-6');
+            context.go('/groups');
           }
         },
       ),
